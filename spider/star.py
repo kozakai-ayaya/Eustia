@@ -7,6 +7,7 @@
 @contact : minami.rinne.me@gmail.com
 @time    : 2020/01/21 午後 10:22
 """
+
 import json
 import logging
 import random
@@ -14,10 +15,12 @@ import time
 
 import requests
 from bs4 import BeautifulSoup
+from kafka import KafkaProducer
 
 
 class BiliSpider:
     def __init__(self):
+        self.producer = KafkaProducer(bootstrap_servers='127.0.0.1:9092')
         self.logger = logging.getLogger('log')
         self.logger.setLevel(logging.DEBUG)
         fh = logging.FileHandler("logger.log", encoding='utf-8')
@@ -87,15 +90,12 @@ class BiliSpider:
         video_info["count"] = bullet_screen_info.get("flag")
         video_info["bullet_screen"] = bullet_screen_info.get("bullet")
         video_info["replies"] = self.video_replies_info(av_number)
-
-        print("[" + time.strftime("%Y-%m-%d %H:%M:%S", time.localtime()) + "] " + video_url + " 获取成功 " + str(
-            video_info))
-        self.logger.info("[" + time.strftime("%Y-%m-%d %H:%M:%S", time.localtime()) + "] " + video_url + " 获取成功")
-        return video_info
+        info_json = json.dumps(video_info, ensure_ascii=False)
+        self.producer.send('kafka-test-topic', bytes(info_json, "UTF-8"))
 
     def star(self):
         av_flag = 50
-        av_number = 7000080
+        av_number = 7000349
 
         while av_number < 99999999:
             if av_flag == av_number:
