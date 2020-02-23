@@ -31,6 +31,10 @@ public interface DataBaseOperation<T> {
 
     void insertManyData(SqlInfo<T> sqlInfo) throws SQLException;
 
+    void insertDuplicateData(SqlInfo<T> sqlInfo) throws SQLException;
+
+    void insertManyDuplicateData(SqlInfo<T> sqlInfo) throws SQLException;
+
     void updateData(SqlInfo<T> sqlInfo) throws SQLException;
 
     void deleteData(SqlInfo<T> sqlInfo) throws SQLException;

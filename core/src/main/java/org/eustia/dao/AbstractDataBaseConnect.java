@@ -95,7 +95,6 @@ public class AbstractDataBaseConnect<T> implements DataBaseOperation<T> {
     public void insertManyData(SqlInfo<T> sqlInfo) throws SQLException {
         try (Connection connection = HikariCpConnect.syncPool.getConnection()) {
             String sql = "INSERT INTO " + sqlInfo.getTable() +  " " + sqlInfo.getKey() + " VALUES " + sqlInfo.getValue();
-            connection.setAutoCommit(false);
             PreparedStatement preparedStatement = connection.prepareStatement(sql);
 
             for (ArrayList<Object> info : sqlInfo.getManyDataList()) {
@@ -105,7 +104,39 @@ public class AbstractDataBaseConnect<T> implements DataBaseOperation<T> {
                 preparedStatement.addBatch();
             }
             preparedStatement.executeBatch();
-            connection.commit();
+        }
+    }
+
+    @Override
+    public void insertDuplicateData(SqlInfo<T> sqlInfo) throws SQLException {
+        try (Connection connection = HikariCpConnect.syncPool.getConnection()) {
+            String sql = "INSERT INTO " + sqlInfo.getTable() + " " + sqlInfo.getKey() + " VALUES " + sqlInfo.getValue()
+                    + " ON DUPLICATE KEY UPDATE " + sqlInfo.getUpdateKey() + " = " + sqlInfo.getOperation();
+            PreparedStatement preparedStatement = connection.prepareStatement(sql);
+
+            ArrayList<Object> list = sqlInfo.getList();
+            for (int i = 1, value = 0; value < list.size(); i++, value++) {
+                preparedStatement.setObject(i, list.get(value));
+            }
+            preparedStatement.execute();
+        }
+    }
+
+    @Override
+    public void insertManyDuplicateData(SqlInfo<T> sqlInfo) throws SQLException {
+        try (Connection connection = HikariCpConnect.syncPool.getConnection()) {
+            String sql = "INSERT INTO " + sqlInfo.getTable() + " " + sqlInfo.getKey() + " VALUES " + sqlInfo.getValue()
+                    + " ON DUPLICATE KEY UPDATE " + sqlInfo.getUpdateKey() + " = " + sqlInfo.getOperation();
+
+            PreparedStatement preparedStatement = connection.prepareStatement(sql);
+
+            for (ArrayList<Object> info : sqlInfo.getManyDataList()) {
+                for (int i = 1, value = 0; value < info.size(); i++, value++) {
+                    preparedStatement.setObject(i, info.get(value));
+                }
+                preparedStatement.addBatch();
+            }
+            preparedStatement.executeBatch();
         }
     }
 
@@ -149,25 +180,5 @@ public class AbstractDataBaseConnect<T> implements DataBaseOperation<T> {
     @Override
     public ArrayList<T> getSearch(ArrayList<ArrayList<Object>> result) {
         return null;
-    }
-
-    public static void main(String[] args) throws SQLException {
-        new HikariCpConnect();
-        WordCountInfo wordCountInfo = new WordCountInfo();
-        SqlInfo<WordCountInfo> sqlInfo = new SqlInfo<>();
-        AbstractDataBaseConnect<WordCountInfo> abstractDataBaseConnect = new AbstractDataBaseConnect<>();
-        ArrayList<ArrayList<Object>> a = new ArrayList<>();
-        for (int i = 0; i < 5; i ++) {
-            ArrayList<Object> arrayList = new ArrayList<>();
-            arrayList.add(1 + i);
-            arrayList.add(10 + i);
-            arrayList.add(20 + i);
-            a.add(arrayList);
-        }
-        sqlInfo.setManyDataList(a);
-        sqlInfo.setTable("hot_word");
-        sqlInfo.setKey("(times_stamp, word, count)");
-        sqlInfo.setValue("(?, ?, ?)");
-        abstractDataBaseConnect.insertManyData(sqlInfo);
     }
 }

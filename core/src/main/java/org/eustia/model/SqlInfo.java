@@ -23,6 +23,7 @@ import java.util.HashMap;
 public class SqlInfo<T> {
     private String table;
     private String key;
+    private String operation;
     private Object value;
     private T model;
     private ArrayList<Object> list;
@@ -74,12 +75,29 @@ public class SqlInfo<T> {
         this.manyDataList = manyDataList;
     }
 
-    public void setList(ArrayList<Object> list) {
-        this.list = list;
+
+    public void setUpdateKey(String updateKey) {
+        this.updateKey = updateKey;
+    }
+
+    public void setOperation(String operation) {
+        this.operation = operation;
+    }
+
+    public String getOperation() {
+        return operation;
+    }
+
+    public String getUpdateKey() {
+        return updateKey;
     }
 
     public HashMap<String, Object> getUpdateMap() {
         return updateMap;
+    }
+
+    public void setList(ArrayList<Object> list) {
+        this.list = list;
     }
 
     public void setUpdateMap(HashMap<String, Object> updateMap) {

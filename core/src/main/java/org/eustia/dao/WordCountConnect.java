@@ -1,6 +1,6 @@
 package org.eustia.dao;
 /*
- * @package: org.eustia.dao.impl
+ * @package: org.eustia.dao
  * @program: WordCountConnect
  * @description
  *
@@ -54,17 +54,73 @@ public class WordCountConnect extends AbstractDataBaseConnect<WordCountInfo> imp
     }
 
     @Override
-    public void updateData(SqlInfo<WordCountInfo> sqlInfo) throws SQLException {
+    public void insertManyData(SqlInfo<WordCountInfo> sqlInfo) throws SQLException {
+        sqlInfo.setTable("hot_word");
+        sqlInfo.setKey("time_stamp, word, count");
+        sqlInfo.setValue("(?, ?, ?)");
 
+        super.insertManyData(sqlInfo);
+    }
+
+    @Override
+    public void insertDuplicateData(SqlInfo<WordCountInfo> sqlInfo) throws SQLException {
+        sqlInfo.setTable("hot_word");
+        sqlInfo.setKey("time_stamp, word, count");
+        sqlInfo.setValue("(?, ?, ?)");
+        sqlInfo.setUpdateKey("count");
+        sqlInfo.setOperation(" = count + ?");
+
+        WordCountInfo wordCountInfo = sqlInfo.getModel();
+        ArrayList<Object> list = new ArrayList<>();
+        list.add(wordCountInfo.getTimeStamp());
+        list.add(wordCountInfo.getWord());
+        list.add(wordCountInfo.getCount());
+        list.add(wordCountInfo.getCount());
+
+        sqlInfo.setList(list);
+        super.insertDuplicateData(sqlInfo);
+    }
+
+    @Override
+    public void insertManyDuplicateData(SqlInfo<WordCountInfo> sqlInfo) throws SQLException {
+        sqlInfo.setTable("hot_word");
+        sqlInfo.setKey("time_stamp, word, count");
+        sqlInfo.setValue("(?, ?, ?)");
+        sqlInfo.setUpdateKey("count");
+        sqlInfo.setOperation(" = count + ?");
+
+        ArrayList<ArrayList<Object>> newDataList = new ArrayList<>();
+        for (ArrayList<Object> arrayList : sqlInfo.getManyDataList()) {
+            arrayList.add(arrayList.size());
+            newDataList.add(arrayList);
+        }
+        sqlInfo.setManyDataList(newDataList);
+
+        super.insertManyDuplicateData(sqlInfo);
+    }
+
+    @Override
+    public void updateData(SqlInfo<WordCountInfo> sqlInfo) throws SQLException {
+        sqlInfo.setTable("hot_word");
+        super.updateData(sqlInfo);
     }
 
     @Override
     public void deleteData(SqlInfo<WordCountInfo> sqlInfo) throws SQLException {
-
+        sqlInfo.setTable("hot_word");
+        super.deleteData(sqlInfo);
     }
 
     @Override
     public ArrayList<WordCountInfo> getSearch(ArrayList<ArrayList<Object>> result) {
-        return null;
+        ArrayList<WordCountInfo> arrayList = new ArrayList<>();
+        for (ArrayList<Object> o : result) {
+            WordCountInfo wordCountInfo = new WordCountInfo();
+            wordCountInfo.setTimeStamp((int) o.get(0));
+            wordCountInfo.setWord((String) o.get(1));
+            wordCountInfo.setCount((int) o.get(2));
+            arrayList.add(wordCountInfo);
+        }
+        return arrayList;
     }
 }
