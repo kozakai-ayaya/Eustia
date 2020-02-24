@@ -27,29 +27,11 @@ import java.util.HashMap;
  */
 
 public class HikariCpConnect {
-    private final HashMap<String, String> databaseInfo = new HashMap<>();
     public static HikariDataSource syncPool;
 
-    public HikariCpConnect() {
-        readDatabaseInfo();
-
-        HikariConfig hikariConfig = new HikariConfig();
-        final String className = "com.mysql.cj.jdbc.Driver";
-        hikariConfig.setDriverClassName(className);
-        hikariConfig.setJdbcUrl(this.databaseInfo.get("url"));
-        hikariConfig.setUsername(this.databaseInfo.get("user"));
-        hikariConfig.setPassword(this.databaseInfo.get("pwd"));
-        hikariConfig.addDataSourceProperty("cachePrepStmts", "true");
-        hikariConfig.addDataSourceProperty("prepStmtCacheSize", "250");
-        hikariConfig.addDataSourceProperty("prepStmtCacheSqlLimit", "2048");
-        syncPool = new HikariDataSource(hikariConfig);
-    }
-
-    private void readDatabaseInfo() {
+    static {
         File jsonFile = new File("src/main/resources/word_count_db.json");
-
         try (Reader reader = new InputStreamReader(new FileInputStream(jsonFile), StandardCharsets.UTF_8)) {
-
             StringBuilder stringBuilder = new StringBuilder();
 
             int i;
@@ -59,10 +41,17 @@ public class HikariCpConnect {
 
             String jsonString = stringBuilder.toString();
             JSONObject jsonObject = JSON.parseObject(jsonString);
-            this.databaseInfo.put("driver", jsonObject.getString("driver"));
-            this.databaseInfo.put("url", jsonObject.getString("url"));
-            this.databaseInfo.put("user", jsonObject.getString("user"));
-            this.databaseInfo.put("pwd", jsonObject.getString("pwd"));
+
+            HikariConfig hikariConfig = new HikariConfig();
+            final String className = "com.mysql.cj.jdbc.Driver";
+            hikariConfig.setDriverClassName(className);
+            hikariConfig.setJdbcUrl(jsonObject.getString("driver"));
+            hikariConfig.setUsername(jsonObject.getString("user"));
+            hikariConfig.setPassword(jsonObject.getString("pwd"));
+            hikariConfig.addDataSourceProperty("cachePrepStmts", "true");
+            hikariConfig.addDataSourceProperty("prepStmtCacheSize", "250");
+            hikariConfig.addDataSourceProperty("prepStmtCacheSqlLimit", "2048");
+            syncPool = new HikariDataSource(hikariConfig);
         } catch (IOException e) {
             e.printStackTrace();
         }

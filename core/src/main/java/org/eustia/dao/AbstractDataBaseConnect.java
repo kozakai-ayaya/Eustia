@@ -118,7 +118,12 @@ public class AbstractDataBaseConnect<T> implements DataBaseOperation<T> {
             for (int i = 1, value = 0; value < list.size(); i++, value++) {
                 preparedStatement.setObject(i, list.get(value));
             }
-            preparedStatement.execute();
+            System.out.println(preparedStatement.toString());
+            try {
+                preparedStatement.execute();
+            } catch (Exception e) {
+                System.out.println(e);
+            }
         }
     }
 

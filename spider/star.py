@@ -9,7 +9,6 @@
 """
 
 import json
-import logging
 import random
 import time
 
@@ -21,13 +20,6 @@ from kafka import KafkaProducer
 class BiliSpider:
     def __init__(self):
         self.producer = KafkaProducer(bootstrap_servers='127.0.0.1:9092')
-        self.logger = logging.getLogger('log')
-        self.logger.setLevel(logging.DEBUG)
-        fh = logging.FileHandler("logger.log", encoding='utf-8')
-        fh.setLevel(logging.DEBUG)
-        self.logger.addHandler(fh)
-        ch = logging.StreamHandler()
-        ch.setLevel(logging.DEBUG)
 
         self.video_url = "https://www.bilibili.com/video/av"
         self.video_base_info_api_url = "https://api.bilibili.com/archive_stat/stat?aid="
@@ -35,6 +27,39 @@ class BiliSpider:
         self.video_tag_info_api_url = "https://api.bilibili.com/x/tag/archive/tags?aid="
         self.video_replies_api_url = "http://api.bilibili.com/x/v2/reply?jsonp=jsonp&;pn=1&type=1&oid="
         self.video_bullet_screen_api_url = "http://comment.bilibili.com/"
+
+    def star(self):
+        av_flag = 50
+        av_number = 10000000
+
+        while av_number < 99999999:
+            if av_flag == av_number:
+                av_flag += random.randint(50, 70)
+                time.sleep(random.randint(10, 20))
+
+            video_url = self.video_url + str(av_number)
+
+            try:
+                get_requests = requests.get(video_url)
+                video_bs = BeautifulSoup(get_requests.text, "html.parser")
+            except Exception as e:
+                print(e)
+                time.sleep(random.randint(20, 30))
+                get_requests = requests.get(video_url)
+                video_bs = BeautifulSoup(get_requests.text, "html.parser")
+
+            # 检查视频是否存在
+            if "视频去哪了呢" in str(video_bs.text):
+                av_number += 1
+                print("[" + time.strftime("%Y-%m-%d %H:%M:%S", time.localtime()) + "] " + video_url + " 此稿件已删除")
+                continue
+
+            if len(video_bs.find_all("div", attrs={"class": "r-con"})) > 0:
+                self.video(av_number, video_bs)
+            else:
+                self.bangumi()
+
+            av_number += 1
 
     def bangumi(self):
         pass
@@ -92,35 +117,6 @@ class BiliSpider:
         video_info["replies"] = self.video_replies_info(av_number)
         info_json = json.dumps(video_info, ensure_ascii=False)
         self.producer.send('kafka-test-topic', bytes(info_json, "UTF-8"))
-
-    def star(self):
-        av_flag = 50
-        av_number = 7000349
-
-        while av_number < 99999999:
-            if av_flag == av_number:
-                av_flag += random.randint(50, 70)
-                time.sleep(random.randint(5, 10))
-
-            video_url = self.video_url + str(av_number)
-            get_requests = requests.get(video_url)
-            video_bs = BeautifulSoup(get_requests.text, "html.parser")
-
-            # 检查视频是否存在
-            if "视频去哪了呢" in str(video_bs.text):
-                av_number += 1
-                print("[" + time.strftime("%Y-%m-%d %H:%M:%S", time.localtime()) + "] " + video_url + " 此稿件已删除")
-                self.logger.info(
-                    "[" + time.strftime("%Y-%m-%d %H:%M:%S", time.localtime()) + "] " + video_url + " 此稿件已删除")
-                continue
-
-            if len(video_bs.find_all("div", attrs={"class": "r-con"})) > 0:
-                self.video(av_number, video_bs)
-            else:
-                print("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa")
-                self.bangumi()
-
-            av_number += 1
 
     def video_replies_info(self, av_number):
         video_replies_api_url = self.video_replies_api_url + str(av_number)

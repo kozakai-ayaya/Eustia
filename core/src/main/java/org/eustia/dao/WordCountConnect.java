@@ -56,7 +56,7 @@ public class WordCountConnect extends AbstractDataBaseConnect<WordCountInfo> imp
     @Override
     public void insertManyData(SqlInfo<WordCountInfo> sqlInfo) throws SQLException {
         sqlInfo.setTable("hot_word");
-        sqlInfo.setKey("time_stamp, word, count");
+        sqlInfo.setKey("(times_stamp, word, count)");
         sqlInfo.setValue("(?, ?, ?)");
 
         super.insertManyData(sqlInfo);
@@ -65,10 +65,10 @@ public class WordCountConnect extends AbstractDataBaseConnect<WordCountInfo> imp
     @Override
     public void insertDuplicateData(SqlInfo<WordCountInfo> sqlInfo) throws SQLException {
         sqlInfo.setTable("hot_word");
-        sqlInfo.setKey("time_stamp, word, count");
+        sqlInfo.setKey("(times_stamp, word, count)");
         sqlInfo.setValue("(?, ?, ?)");
         sqlInfo.setUpdateKey("count");
-        sqlInfo.setOperation(" = count + ?");
+        sqlInfo.setOperation("count + ?");
 
         WordCountInfo wordCountInfo = sqlInfo.getModel();
         ArrayList<Object> list = new ArrayList<>();
@@ -84,10 +84,10 @@ public class WordCountConnect extends AbstractDataBaseConnect<WordCountInfo> imp
     @Override
     public void insertManyDuplicateData(SqlInfo<WordCountInfo> sqlInfo) throws SQLException {
         sqlInfo.setTable("hot_word");
-        sqlInfo.setKey("time_stamp, word, count");
+        sqlInfo.setKey("(times_stamp, word, count)");
         sqlInfo.setValue("(?, ?, ?)");
         sqlInfo.setUpdateKey("count");
-        sqlInfo.setOperation(" = count + ?");
+        sqlInfo.setOperation("count + ?");
 
         ArrayList<ArrayList<Object>> newDataList = new ArrayList<>();
         for (ArrayList<Object> arrayList : sqlInfo.getManyDataList()) {

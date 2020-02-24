@@ -19,10 +19,13 @@ import org.apache.flink.shaded.jackson2.com.fasterxml.jackson.databind.node.Obje
 import org.apache.flink.streaming.api.datastream.DataStream;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
 import org.apache.flink.streaming.api.functions.ProcessFunction;
-import org.apache.flink.streaming.api.windowing.time.Time;
+import org.apache.flink.streaming.api.functions.sink.RichSinkFunction;
 import org.apache.flink.streaming.connectors.kafka.FlinkKafkaConsumer;
 import org.apache.flink.streaming.util.serialization.JSONKeyValueDeserializationSchema;
 import org.apache.flink.util.Collector;
+import org.eustia.dao.WordCountConnect;
+import org.eustia.model.SqlInfo;
+import org.eustia.model.WordCountInfo;
 
 import java.util.*;
 
@@ -35,7 +38,7 @@ import java.util.*;
  */
 
 public class WordCountStream {
-    public static void main(String[] args) {
+    public static void main(final String[] args) {
         final StreamExecutionEnvironment streamExecutionEnvironment = StreamExecutionEnvironment.getExecutionEnvironment();
         Properties properties = new Properties();
         properties.setProperty("bootstrap.servers", "127.0.0.1:9092");
@@ -59,11 +62,15 @@ public class WordCountStream {
                     while (field.hasNext()) {
 
                         Map.Entry<String, JsonNode> message = field.next();
-                        int times = Integer.parseInt(message.getKey()) / (5 * 60);
+                        int times = Integer.parseInt(message.getKey()) / (24 * 60 * 60);
                         Result parse = NlpAnalysis.parse(message.getValue().toString().replaceAll("[\\pP\\pS\\pZ]", ""));
 
-                        for (Term word : parse) {
-                            Tuple2<Integer, String> text = new Tuple2<>(times, word.toString().split("/")[0]);
+                        for (Term words : parse) {
+                            String word = words.toString().split("/")[0];
+                            if (word.length() <= 1) {
+                                continue;
+                            }
+                            Tuple2<Integer, String> text = new Tuple2<>(times, word);
                             collector.collect(text);
                         }
                     }
@@ -72,11 +79,15 @@ public class WordCountStream {
                 JsonNode replies = value.get("replies");
                 for (JsonNode repliesInfo : replies) {
                     JsonNode repliesMessage = repliesInfo.get("message");
-                    int times = Integer.parseInt(repliesInfo.get("time").toString()) / (5 * 60);
+                    int times = Integer.parseInt(repliesInfo.get("time").toString()) / (24 * 60 * 60);
                     Result parse = NlpAnalysis.parse(repliesMessage.toString().replaceAll("[\\pP\\pS\\pZ]", ""));
 
-                    for (Term word : parse) {
-                        Tuple2<Integer, String> text = new Tuple2<>(times, word.toString().split("/")[0]);
+                    for (Term words : parse) {
+                        String word = words.toString().split("/")[0];
+                        if (word.length() <= 1) {
+                            continue;
+                        }
+                        Tuple2<Integer, String> text = new Tuple2<>(times, word);
                         collector.collect(text);
                     }
                 }
@@ -90,12 +101,21 @@ public class WordCountStream {
                     }
                 })
                 .keyBy(0)
-                .timeWindow(Time.minutes(2))
                 .sum(1)
-                .process(new ProcessFunction<Tuple2<Tuple2<Integer, String>, Integer>, Object>() {
+                .addSink(new RichSinkFunction<Tuple2<Tuple2<Integer, String>, Integer>>() {
                     @Override
-                    public void processElement(Tuple2<Tuple2<Integer, String>, Integer> value, Context ctx, Collector<Object> out) throws Exception {
+                    public void invoke(Tuple2<Tuple2<Integer, String>, Integer> value, Context context) throws Exception {
+                        WordCountConnect wordCountConnect = new WordCountConnect();
+                        WordCountInfo wordCountInfo = new WordCountInfo();
+                        SqlInfo<WordCountInfo> sqlInfo = new SqlInfo<>();
+                        Tuple2<Integer, String> key = value.getField(0);
 
+                        wordCountInfo.setTimeStamp((int) key.getField(0));
+                        wordCountInfo.setWord((String) key.getField(1));
+                        wordCountInfo.setCount((int) value.getField(1));
+
+                        sqlInfo.setModel(wordCountInfo);
+                        wordCountConnect.insertDuplicateData(sqlInfo);
                     }
                 });
 
