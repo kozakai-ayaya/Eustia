@@ -12,7 +12,6 @@ package org.eustia.dao;
 import org.eustia.common.HikariCpConnect;
 import org.eustia.dao.impl.DataBaseOperation;
 import org.eustia.model.SqlInfo;
-import org.eustia.model.WordCountInfo;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -108,7 +107,7 @@ public class AbstractDataBaseConnect<T> implements DataBaseOperation<T> {
     }
 
     @Override
-    public void insertDuplicateData(SqlInfo<T> sqlInfo) throws SQLException {
+    public void insertDuplicateUpdateData(SqlInfo<T> sqlInfo) throws SQLException {
         try (Connection connection = HikariCpConnect.syncPool.getConnection()) {
             String sql = "INSERT INTO " + sqlInfo.getTable() + " " + sqlInfo.getKey() + " VALUES " + sqlInfo.getValue()
                     + " ON DUPLICATE KEY UPDATE " + sqlInfo.getUpdateKey() + " = " + sqlInfo.getOperation();
@@ -128,11 +127,48 @@ public class AbstractDataBaseConnect<T> implements DataBaseOperation<T> {
     }
 
     @Override
-    public void insertManyDuplicateData(SqlInfo<T> sqlInfo) throws SQLException {
+    public void insertManyDuplicateUpdateData(SqlInfo<T> sqlInfo) throws SQLException {
         try (Connection connection = HikariCpConnect.syncPool.getConnection()) {
             String sql = "INSERT INTO " + sqlInfo.getTable() + " " + sqlInfo.getKey() + " VALUES " + sqlInfo.getValue()
                     + " ON DUPLICATE KEY UPDATE " + sqlInfo.getUpdateKey() + " = " + sqlInfo.getOperation();
 
+            PreparedStatement preparedStatement = connection.prepareStatement(sql);
+
+            for (ArrayList<Object> info : sqlInfo.getManyDataList()) {
+                for (int i = 1, value = 0; value < info.size(); i++, value++) {
+                    preparedStatement.setObject(i, info.get(value));
+                }
+                preparedStatement.addBatch();
+            }
+            preparedStatement.executeBatch();
+        }
+    }
+
+    @Override
+    public void insertDuplicateReplaceData(SqlInfo<T> sqlInfo) throws SQLException {
+        try (Connection connection = HikariCpConnect.syncPool.getConnection()) {
+            String sql = "INSERT INTO " + sqlInfo.getTable() + " " + sqlInfo.getKey() + " VALUES " + sqlInfo.getValue()
+                    + " ON DUPLICATE KEY REPLACE " + sqlInfo.getUpdateKey() + " = " + sqlInfo.getOperation();
+            PreparedStatement preparedStatement = connection.prepareStatement(sql);
+
+            ArrayList<Object> list = sqlInfo.getList();
+            for (int i = 1, value = 0; value < list.size(); i++, value++) {
+                preparedStatement.setObject(i, list.get(value));
+            }
+            System.out.println(preparedStatement.toString());
+            try {
+                preparedStatement.execute();
+            } catch (Exception e) {
+                System.out.println(e);
+            }
+        }
+    }
+
+    @Override
+    public void insertManyDuplicateReplaceData(SqlInfo<T> sqlInfo) throws SQLException {
+        try (Connection connection = HikariCpConnect.syncPool.getConnection()) {
+            String sql = "INSERT INTO " + sqlInfo.getTable() + " " + sqlInfo.getKey() + " VALUES " + sqlInfo.getValue()
+                    + " ON DUPLICATE KEY REPLACE " + sqlInfo.getUpdateKey() + " = " + sqlInfo.getOperation();
             PreparedStatement preparedStatement = connection.prepareStatement(sql);
 
             for (ArrayList<Object> info : sqlInfo.getManyDataList()) {

@@ -20,6 +20,7 @@ import org.apache.flink.streaming.api.datastream.DataStream;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
 import org.apache.flink.streaming.api.functions.ProcessFunction;
 import org.apache.flink.streaming.api.functions.sink.RichSinkFunction;
+import org.apache.flink.streaming.api.windowing.time.Time;
 import org.apache.flink.streaming.connectors.kafka.FlinkKafkaConsumer;
 import org.apache.flink.streaming.util.serialization.JSONKeyValueDeserializationSchema;
 import org.apache.flink.util.Collector;
@@ -60,7 +61,6 @@ public class WordCountStream {
                     Iterator<Map.Entry<String, JsonNode>> field = bullet.fields();
 
                     while (field.hasNext()) {
-
                         Map.Entry<String, JsonNode> message = field.next();
                         int times = Integer.parseInt(message.getKey()) / (24 * 60 * 60);
                         Result parse = NlpAnalysis.parse(message.getValue().toString().replaceAll("[\\pP\\pS\\pZ]", ""));
@@ -101,7 +101,17 @@ public class WordCountStream {
                     }
                 })
                 .keyBy(0)
+                .timeWindow(Time.seconds(1))
                 .sum(1)
+//                .process(new ProcessFunction<Tuple2<Tuple2<Integer, String>, Integer>, Tuple2<Tuple2<Integer, String>, Integer>>() {
+//                    @Override
+//                    public void processElement(Tuple2<Tuple2<Integer, String>, Integer> value, Context ctx,
+//                                               Collector<Tuple2<Tuple2<Integer, String>, Integer>> out) {
+//                        if ((int) value.getField(1) >= 10) {
+//                            out.collect(value);
+//                        }
+//                    }
+//                })
                 .addSink(new RichSinkFunction<Tuple2<Tuple2<Integer, String>, Integer>>() {
                     @Override
                     public void invoke(Tuple2<Tuple2<Integer, String>, Integer> value, Context context) throws Exception {
@@ -115,12 +125,12 @@ public class WordCountStream {
                         wordCountInfo.setCount((int) value.getField(1));
 
                         sqlInfo.setModel(wordCountInfo);
-                        wordCountConnect.insertDuplicateData(sqlInfo);
+                        wordCountConnect.insertDuplicateUpdateData(sqlInfo);
                     }
                 });
 
         try {
-            streamExecutionEnvironment.execute("test");
+            streamExecutionEnvironment.execute("WordCount");
         } catch (Exception e) {
             e.printStackTrace();
         }

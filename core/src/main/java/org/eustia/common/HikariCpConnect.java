@@ -16,7 +16,6 @@ import com.zaxxer.hikari.HikariDataSource;
 
 import java.io.*;
 import java.nio.charset.StandardCharsets;
-import java.util.HashMap;
 
 /**
  * @classname: HikariCpConnect
@@ -45,7 +44,7 @@ public class HikariCpConnect {
             HikariConfig hikariConfig = new HikariConfig();
             final String className = "com.mysql.cj.jdbc.Driver";
             hikariConfig.setDriverClassName(className);
-            hikariConfig.setJdbcUrl(jsonObject.getString("driver"));
+            hikariConfig.setJdbcUrl(jsonObject.getString("url"));
             hikariConfig.setUsername(jsonObject.getString("user"));
             hikariConfig.setPassword(jsonObject.getString("pwd"));
             hikariConfig.addDataSourceProperty("cachePrepStmts", "true");

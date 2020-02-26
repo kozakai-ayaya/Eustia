@@ -18,7 +18,6 @@ package org.eustia.model;
  */
 
 public class WordCountInfo {
-    private int id;
     private int timeStamp;
     private String word;
     private int count;
