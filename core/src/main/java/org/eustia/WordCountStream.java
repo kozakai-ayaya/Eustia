@@ -42,8 +42,8 @@ public class WordCountStream {
     public static void main(final String[] args) {
         final StreamExecutionEnvironment streamExecutionEnvironment = StreamExecutionEnvironment.getExecutionEnvironment();
         Properties properties = new Properties();
-        properties.setProperty("bootstrap.servers", "127.0.0.1:9092");
-        properties.setProperty("zookeeper.connect", "127.0.0.1:2181");
+        properties.setProperty("bootstrap.servers", "localhost:9092");
+        properties.setProperty("zookeeper.connect", "localhost:2181");
         properties.setProperty("group.id", "kafka.test");
         FlinkKafkaConsumer<ObjectNode> kafkaConsumer = new FlinkKafkaConsumer<>("kafka-test-topic",
                 new JSONKeyValueDeserializationSchema(true), properties);
