@@ -78,6 +78,15 @@ public class AbstractDataBaseConnect<T> implements DataBaseOperation<T> {
     }
 
     @Override
+    public void createTable(SqlInfo<T> sqlInfo) throws SQLException {
+        try (Connection connection = HikariCpConnect.syncPool.getConnection()) {
+            String sql = "CREATE TALBE " + " " + sqlInfo.getTable() + " " + sqlInfo.getValue();
+            PreparedStatement preparedStatement = connection.prepareStatement(sql);
+            preparedStatement.executeQuery();
+        }
+    }
+
+    @Override
     public void insertData(SqlInfo<T> sqlInfo) throws SQLException {
         try (Connection connection = HikariCpConnect.syncPool.getConnection()) {
             String sql = "INSERT INTO " + sqlInfo.getTable() +  " " + sqlInfo.getKey() + " VALUES " + sqlInfo.getValue();

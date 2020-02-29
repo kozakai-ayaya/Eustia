@@ -27,19 +27,27 @@ import java.util.ArrayList;
 public class WordCountConnect extends AbstractDataBaseConnect<WordCountInfo> implements DataBaseOperation<WordCountInfo> {
     @Override
     public ArrayList<ArrayList<Object>> getResult(SqlInfo<WordCountInfo> sqlInfo) throws SQLException {
-        sqlInfo.setTable("hot_word");
         return super.getResult(sqlInfo);
     }
 
     @Override
     public ArrayList<ArrayList<Object>> getAllResult(SqlInfo<WordCountInfo> sqlInfo) throws SQLException {
-        sqlInfo.setTable("hot_word");
         return super.getResult(sqlInfo);
     }
 
     @Override
+    public void createTable(SqlInfo<WordCountInfo> sqlInfo) throws SQLException {
+        sqlInfo.setTable("hot_word" + sqlInfo.getTable());
+        sqlInfo.setValue("  `times_stamp` int(11) NOT NULL," +
+                         "  `word` varchar(255) NOT NULL," +
+                         "  `count` int(11) DEFAULT NULL," +
+                         "  PRIMARY KEY (`times_stamp`,`word`)" +
+                         ") ENGINE=InnoDB");
+        super.createTable(sqlInfo);
+    }
+
+    @Override
     public void insertData(SqlInfo<WordCountInfo> sqlInfo) throws SQLException {
-        sqlInfo.setTable("hot_word");
         sqlInfo.setKey("time_stamp, word, count");
         sqlInfo.setValue("(?, ?, ?)");
 
@@ -55,7 +63,6 @@ public class WordCountConnect extends AbstractDataBaseConnect<WordCountInfo> imp
 
     @Override
     public void insertManyData(SqlInfo<WordCountInfo> sqlInfo) throws SQLException {
-        sqlInfo.setTable("hot_word");
         sqlInfo.setKey("(times_stamp, word, count)");
         sqlInfo.setValue("(?, ?, ?)");
 
@@ -64,7 +71,7 @@ public class WordCountConnect extends AbstractDataBaseConnect<WordCountInfo> imp
 
     @Override
     public void insertDuplicateUpdateData(SqlInfo<WordCountInfo> sqlInfo) throws SQLException {
-        sqlInfo.setTable("hot_word");
+        sqlInfo.setTable("hot_word" + sqlInfo.getTable());
         sqlInfo.setKey("(times_stamp, word, count)");
         sqlInfo.setValue("(?, ?, ?)");
         sqlInfo.setUpdateKey("count");
@@ -83,7 +90,6 @@ public class WordCountConnect extends AbstractDataBaseConnect<WordCountInfo> imp
 
     @Override
     public void insertManyDuplicateUpdateData(SqlInfo<WordCountInfo> sqlInfo) throws SQLException {
-        sqlInfo.setTable("hot_word");
         sqlInfo.setKey("(times_stamp, word, count)");
         sqlInfo.setValue("(?, ?, ?)");
         sqlInfo.setUpdateKey("count");
@@ -100,14 +106,22 @@ public class WordCountConnect extends AbstractDataBaseConnect<WordCountInfo> imp
     }
 
     @Override
+    public void insertDuplicateReplaceData(SqlInfo<WordCountInfo> sqlInfo) throws SQLException {
+        super.insertDuplicateReplaceData(sqlInfo);
+    }
+
+    @Override
+    public void insertManyDuplicateReplaceData(SqlInfo<WordCountInfo> sqlInfo) throws SQLException {
+        super.insertManyDuplicateReplaceData(sqlInfo);
+    }
+
+    @Override
     public void updateData(SqlInfo<WordCountInfo> sqlInfo) throws SQLException {
-        sqlInfo.setTable("hot_word");
         super.updateData(sqlInfo);
     }
 
     @Override
     public void deleteData(SqlInfo<WordCountInfo> sqlInfo) throws SQLException {
-        sqlInfo.setTable("hot_word");
         super.deleteData(sqlInfo);
     }
 

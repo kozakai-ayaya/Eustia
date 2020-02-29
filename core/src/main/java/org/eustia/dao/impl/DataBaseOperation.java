@@ -27,6 +27,8 @@ public interface DataBaseOperation<T> {
 
     ArrayList<ArrayList<Object>> getAllResult(SqlInfo<T> sqlInfo) throws SQLException;
 
+    void createTable(SqlInfo<T> sqlInfo) throws SQLException;
+
     void insertData(SqlInfo<T> sqlInfo) throws SQLException;
 
     void insertManyData(SqlInfo<T> sqlInfo) throws SQLException;
