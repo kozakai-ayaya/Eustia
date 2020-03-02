@@ -14,6 +14,7 @@ import org.ansj.domain.Term;
 import org.ansj.splitWord.analysis.NlpAnalysis;
 import org.apache.flink.api.common.functions.FlatMapFunction;
 import org.apache.flink.api.java.tuple.Tuple2;
+import org.apache.flink.configuration.Configuration;
 import org.apache.flink.shaded.jackson2.com.fasterxml.jackson.databind.JsonNode;
 import org.apache.flink.shaded.jackson2.com.fasterxml.jackson.databind.node.ObjectNode;
 import org.apache.flink.streaming.api.datastream.DataStream;
@@ -24,12 +25,11 @@ import org.apache.flink.streaming.api.windowing.time.Time;
 import org.apache.flink.streaming.connectors.kafka.FlinkKafkaConsumer;
 import org.apache.flink.streaming.util.serialization.JSONKeyValueDeserializationSchema;
 import org.apache.flink.util.Collector;
+import org.eustia.common.TimeSetting;
 import org.eustia.dao.WordCountConnect;
 import org.eustia.model.SqlInfo;
 import org.eustia.model.WordCountInfo;
 
-import java.sql.Timestamp;
-import java.text.SimpleDateFormat;
 import java.util.*;
 
 /**
@@ -42,14 +42,8 @@ import java.util.*;
 
 public class WordCountStream {
     public static void main(final String[] args) {
-        final int hour = 1000 * 60 * 60;
         final int needCount = 10;
-        Timestamp timestamp = new Timestamp(System.currentTimeMillis());
-        long day = timestamp.getTime() / (1000 * 60 * 60 * 24);
-        SimpleDateFormat simpleDateFormat = new SimpleDateFormat("yyyyMMdd");
-        Integer[] tableFlag = new Integer[]{0};
-        String[] dayFormat = new String[]{simpleDateFormat.format(timestamp)};
-        String[] tableName = new String[]{dayFormat[0] + "_" + tableFlag[0]};
+
 
         StreamExecutionEnvironment streamExecutionEnvironment = StreamExecutionEnvironment.getExecutionEnvironment();
         Properties properties = new Properties();
@@ -115,6 +109,7 @@ public class WordCountStream {
                 .timeWindow(Time.seconds(1))
                 .sum(1)
                 .process(new ProcessFunction<Tuple2<Tuple2<Integer, String>, Integer>, Tuple2<Tuple2<Integer, String>, Integer>>() {
+
                     @Override
                     public void processElement(Tuple2<Tuple2<Integer, String>, Integer> value, Context ctx,
                                                Collector<Tuple2<Tuple2<Integer, String>, Integer>> out) {
@@ -124,32 +119,39 @@ public class WordCountStream {
                     }
                 })
                 .addSink(new RichSinkFunction<Tuple2<Tuple2<Integer, String>, Integer>>() {
+                    private TimeSetting timeSetting;
+
+                    @Override
+                    public void open(Configuration parameters) throws Exception {
+                        super.open(parameters);
+                        this.timeSetting = new TimeSetting();
+                    }
+
                     @Override
                     public void invoke(Tuple2<Tuple2<Integer, String>, Integer> value, Context context) throws Exception {
-                        Timestamp nowTimestamp = new Timestamp(System.currentTimeMillis());
                         WordCountConnect wordCountConnect = new WordCountConnect();
                         WordCountInfo wordCountInfo = new WordCountInfo();
                         SqlInfo<WordCountInfo> sqlInfo = new SqlInfo<>();
                         Tuple2<Integer, String> key = value.getField(0);
 
-                        if (nowTimestamp.getTime() - timestamp.getTime() > hour || tableFlag[0] == 0) {
-                            long nowDay = nowTimestamp.getTime() / (1000 * 60 * 60 * 24);
-                            if (nowDay > day) {
-                                tableFlag[0] = 0;
-                                dayFormat[0] = simpleDateFormat.format(nowTimestamp);
-                            } else {
-                                tableFlag[0] = tableFlag[0] + 1;
-                            }
-                            tableName[0] = dayFormat[0] + "_" +tableFlag[0];
-                            sqlInfo.setTable(tableName[0]);
-                            wordCountConnect.createTable(sqlInfo);
-                        }
-
                         wordCountInfo.setTimeStamp(key.getField(0));
                         wordCountInfo.setWord(key.getField(1));
                         wordCountInfo.setCount(value.getField(1));
 
-                        sqlInfo.setTable(tableName[0]);
+                        if (this.timeSetting.isHour()) {
+                            if (this.timeSetting.isDay()) {
+                                sqlInfo.setTable(this.timeSetting.getTimeFormat() + "_" + "0");
+                            } else {
+                                sqlInfo.setTable(this.timeSetting.getTimeFormat() + "_" + this.timeSetting.getFlag());
+                            }
+                            try {
+                                wordCountConnect.createTable(sqlInfo);
+                            } catch (Exception e) {
+                                System.out.println(e);
+                            }
+                        }
+
+                        sqlInfo.setTable(timeSetting.getTimeFormat() + "_" + timeSetting.getFlag());
                         sqlInfo.setModel(wordCountInfo);
                         wordCountConnect.insertDuplicateUpdateData(sqlInfo);
                     }
