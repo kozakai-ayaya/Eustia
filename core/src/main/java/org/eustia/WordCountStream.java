@@ -44,7 +44,6 @@ public class WordCountStream {
     public static void main(final String[] args) {
         final int needCount = 10;
 
-
         StreamExecutionEnvironment streamExecutionEnvironment = StreamExecutionEnvironment.getExecutionEnvironment();
         Properties properties = new Properties();
         properties.setProperty("bootstrap.servers", "localhost:9092");
