@@ -9,6 +9,9 @@ package org.eustia.model;
  * @date: 2020/03/03 午後 05:00
  */
 
+import java.util.ArrayList;
+import java.util.Hashtable;
+
 /**
  * @classname: MongodbSqlInfo
  * @description: %{description}
@@ -21,7 +24,8 @@ public class MongodbSqlInfo<T> {
     private String database;
     private String collectionName;
     private String id;
-    private T file;
+    private Hashtable<String, T> file;
+    private ArrayList<Hashtable<String, T>> manyFile;
 
     public String getCollectionName() {
         return collectionName;
@@ -35,8 +39,16 @@ public class MongodbSqlInfo<T> {
         return id;
     }
 
-    public T getFile() {
+    public Hashtable<String, T> getFile() {
         return file;
+    }
+
+    public ArrayList<Hashtable<String, T>> getManyFile() {
+        return manyFile;
+    }
+
+    public void setManyFile(ArrayList<Hashtable<String, T>> manyFile) {
+        this.manyFile = manyFile;
     }
 
     public void setId(String id) {
@@ -51,7 +63,7 @@ public class MongodbSqlInfo<T> {
         this.database = database;
     }
 
-    public void setFile(T file) {
+    public void setFile(Hashtable<String, T> file) {
         this.file = file;
     }
 }

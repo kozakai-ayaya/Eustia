@@ -9,9 +9,10 @@ package org.eustia.dao.impl;
  * @date: 2020/03/03 午後 04:40
  */
 
-import com.mongodb.DBCollection;
 import com.mongodb.MongoException;
+import com.mongodb.client.FindIterable;
 import com.mongodb.client.MongoCollection;
+import com.mongodb.client.MongoCursor;
 import com.mongodb.client.MongoDatabase;
 import org.bson.Document;
 import org.eustia.model.MongodbSqlInfo;
@@ -32,4 +33,12 @@ public interface MongodbOperation<T> {
     void insertData(MongodbSqlInfo<T> mongodbSqlInfo) throws MongoException;
 
     void insertManyData(MongodbSqlInfo<T> mongodbSqlInfo) throws MongoException;
+
+    FindIterable<Document> findAll(MongodbSqlInfo<T> mongodbSqlInfo) throws MongoException;
+
+    MongoCursor<Document> find(MongodbSqlInfo<T> mongodbSqlInfo) throws MongoException;
+
+    void updata(MongodbSqlInfo<T> mongodbSqlInfo) throws MongoException;
+
+    void updateManyData(MongodbSqlInfo<T> mongodbSqlInfo) throws MongoException;
 }
