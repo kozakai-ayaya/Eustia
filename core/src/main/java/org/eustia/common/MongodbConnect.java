@@ -10,7 +10,8 @@ package org.eustia.common;
  */
 
 import com.mongodb.MongoClient;
-import com.mongodb.MongoClientURI;
+import com.mongodb.MongoClientOptions;
+import com.mongodb.ServerAddress;
 
 /**
  * @classname: MongodbConnect
@@ -24,6 +25,7 @@ public class MongodbConnect {
     public static MongoClient mongoClient;
 
     static {
-        mongoClient = new MongoClient("localhost", 27017);
-    }
+        MongoClientOptions option = MongoClientOptions.builder().connectTimeout(60000).build();
+        mongoClient = new MongoClient(new ServerAddress("localhost",27017), option);
+}
 }

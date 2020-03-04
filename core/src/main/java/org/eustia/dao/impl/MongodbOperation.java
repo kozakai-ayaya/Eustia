@@ -25,20 +25,24 @@ import org.eustia.model.MongodbSqlInfo;
  * @Version 1.0
  */
 
-public interface MongodbOperation<T> {
-    MongoDatabase getDatabase(MongodbSqlInfo<T> mongodbSqlInfo) throws MongoException;
+public interface MongodbOperation<T, ValueT> {
+    MongoDatabase getDatabase(MongodbSqlInfo<T, ValueT> mongodbSqlInfo) throws MongoException;
 
-    MongoCollection<Document> getCollection(MongodbSqlInfo<T> mongodbSqlInfo) throws MongoException;
+    MongoCollection<Document> getCollection(MongodbSqlInfo<T, ValueT> mongodbSqlInfo) throws MongoException;
 
-    void insertData(MongodbSqlInfo<T> mongodbSqlInfo) throws MongoException;
+    FindIterable<Document> findAll(MongodbSqlInfo<T, ValueT> mongodbSqlInfo) throws MongoException;
 
-    void insertManyData(MongodbSqlInfo<T> mongodbSqlInfo) throws MongoException;
+    MongoCursor<Document> find(MongodbSqlInfo<T, ValueT> mongodbSqlInfo) throws MongoException;
 
-    FindIterable<Document> findAll(MongodbSqlInfo<T> mongodbSqlInfo) throws MongoException;
+    void insertData(MongodbSqlInfo<T, ValueT> mongodbSqlInfo) throws MongoException;
 
-    MongoCursor<Document> find(MongodbSqlInfo<T> mongodbSqlInfo) throws MongoException;
+    void insertManyData(MongodbSqlInfo<T, ValueT> mongodbSqlInfo) throws MongoException;
 
-    void updateData(MongodbSqlInfo<T> mongodbSqlInfo) throws MongoException;
+    void updateData(MongodbSqlInfo<T, ValueT> mongodbSqlInfo) throws MongoException;
 
-    void updateManyData(MongodbSqlInfo<T> mongodbSqlInfo) throws MongoException;
+    void updateManyData(MongodbSqlInfo<T, ValueT> mongodbSqlInfo) throws MongoException;
+
+    void deleteData(MongodbSqlInfo<T, ValueT> mongodbSqlInfo) throws MongoException;
+
+    void deleteManyData(MongodbSqlInfo<T, ValueT> mongodbSqlInfo) throws MongoException;
 }

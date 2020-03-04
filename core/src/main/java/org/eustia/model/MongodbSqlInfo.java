@@ -20,14 +20,14 @@ import java.util.Hashtable;
  * @Version 1.0
  */
 
-public class MongodbSqlInfo<T> {
+public class MongodbSqlInfo<T, ValueT> {
     private String database;
     private String collectionName;
-    private String id;
-    private Hashtable<String, T> file;
-    private Hashtable<String, T> updateFile;
-    private ArrayList<Hashtable<String, T>> manyFile;
-    private ArrayList<Hashtable<String, T>> updateManyFile;
+    private T model;
+    private Hashtable<String, ValueT> file;
+    private Hashtable<String, ValueT> updateFile;
+    private ArrayList<Hashtable<String, ValueT>> manyFile;
+    private ArrayList<Hashtable<String, ValueT>> updateManyFile;
 
     public String getCollectionName() {
         return collectionName;
@@ -37,40 +37,40 @@ public class MongodbSqlInfo<T> {
         return database;
     }
 
-    public String getId() {
-        return id;
-    }
-
-    public Hashtable<String, T> getFile() {
+    public Hashtable<String, ValueT> getFile() {
         return file;
     }
 
-    public ArrayList<Hashtable<String, T>> getManyFile() {
+    public ArrayList<Hashtable<String, ValueT>> getManyFile() {
         return manyFile;
     }
 
-    public Hashtable<String, T> getUpdateFile() {
+    public Hashtable<String, ValueT> getUpdateFile() {
         return updateFile;
     }
 
-    public ArrayList<Hashtable<String, T>> getUpdateManyFile() {
+    public ArrayList<Hashtable<String, ValueT>> getUpdateManyFile() {
         return updateManyFile;
     }
 
-    public void setUpdateFile(Hashtable<String, T> updateFile) {
+    public T getModel() {
+        return model;
+    }
+
+    public void setModel(T model) {
+        this.model = model;
+    }
+
+    public void setUpdateFile(Hashtable<String, ValueT> updateFile) {
         this.updateFile = updateFile;
     }
 
-    public void setUpdateManyFile(ArrayList<Hashtable<String, T>> updateManyFile) {
+    public void setUpdateManyFile(ArrayList<Hashtable<String, ValueT>> updateManyFile) {
         this.updateManyFile = updateManyFile;
     }
 
-    public void setManyFile(ArrayList<Hashtable<String, T>> manyFile) {
+    public void setManyFile(ArrayList<Hashtable<String, ValueT>> manyFile) {
         this.manyFile = manyFile;
-    }
-
-    public void setId(String id) {
-        this.id = id;
     }
 
     public void setCollectionName(String collectionName) {
@@ -81,7 +81,7 @@ public class MongodbSqlInfo<T> {
         this.database = database;
     }
 
-    public void setFile(Hashtable<String, T> file) {
+    public void setFile(Hashtable<String, ValueT> file) {
         this.file = file;
     }
 }
