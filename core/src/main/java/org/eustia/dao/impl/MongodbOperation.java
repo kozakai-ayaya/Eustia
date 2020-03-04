@@ -38,7 +38,7 @@ public interface MongodbOperation<T> {
 
     MongoCursor<Document> find(MongodbSqlInfo<T> mongodbSqlInfo) throws MongoException;
 
-    void updata(MongodbSqlInfo<T> mongodbSqlInfo) throws MongoException;
+    void updateData(MongodbSqlInfo<T> mongodbSqlInfo) throws MongoException;
 
     void updateManyData(MongodbSqlInfo<T> mongodbSqlInfo) throws MongoException;
 }

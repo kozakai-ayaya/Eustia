@@ -41,7 +41,7 @@ public class AbstractMongodbConnect<T> implements MongodbOperation<T> {
 
     @Override
     public MongoCollection<Document> getCollection(MongodbSqlInfo<T> mongodbSqlInfo) throws MongoException {
-        return getDatabase(mongodbSqlInfo).getCollection(mongodbSqlInfo.getCollectionName());
+        return this.getDatabase(mongodbSqlInfo).getCollection(mongodbSqlInfo.getCollectionName());
     }
 
     @Override
@@ -50,7 +50,7 @@ public class AbstractMongodbConnect<T> implements MongodbOperation<T> {
         for (Map.Entry<String, T> map : mongodbSqlInfo.getFile().entrySet()) {
             document.put(map.getKey(), map.getValue());
         }
-        getCollection(mongodbSqlInfo).insertOne(document);
+        this.getCollection(mongodbSqlInfo).insertOne(document);
     }
 
     @Override
@@ -63,12 +63,12 @@ public class AbstractMongodbConnect<T> implements MongodbOperation<T> {
             }
             list.add(document);
         }
-        getCollection(mongodbSqlInfo).insertMany(list);
+        this.getCollection(mongodbSqlInfo).insertMany(list);
     }
 
     @Override
     public FindIterable<Document> findAll(MongodbSqlInfo<T> mongodbSqlInfo) throws MongoException {
-        return getCollection(mongodbSqlInfo).find();
+        return this.getCollection(mongodbSqlInfo).find();
     }
 
     @Override
@@ -79,16 +79,49 @@ public class AbstractMongodbConnect<T> implements MongodbOperation<T> {
             key = map.getKey();
             value = map.getValue();
         }
-        return getCollection(mongodbSqlInfo).find(Filters.eq(key, value)).iterator();
+        return this.getCollection(mongodbSqlInfo).find(Filters.eq(key, value)).iterator();
     }
 
     @Override
-    public void updata(MongodbSqlInfo<T> mongodbSqlInfo) throws MongoException {
+    public void updateData(MongodbSqlInfo<T> mongodbSqlInfo) throws MongoException {
+        String key = "";
+        String updateKey = "";
+        T value = null;
+        T updateValue = null;
+        for (Map.Entry<String, T> map : mongodbSqlInfo.getFile().entrySet()) {
+            key = map.getKey();
+            value = map.getValue();
+        }
 
+        for (Map.Entry<String, T> map : mongodbSqlInfo.getUpdateFile().entrySet()) {
+            updateKey = map.getKey();
+            updateValue = map.getValue();
+        }
+        this.getCollection(mongodbSqlInfo).updateOne(Filters.eq(key, value),
+                                                     new Document("$set", new Document(updateKey, updateValue)));
     }
 
     @Override
     public void updateManyData(MongodbSqlInfo<T> mongodbSqlInfo) throws MongoException {
+        String key = "";
+        T value = null;
+        List<Document> list = new ArrayList<>();
 
+        for (Hashtable<String, T> file : mongodbSqlInfo.getUpdateManyFile()) {
+            String updateKey = "";
+            T updateValue = null;
+            for (Map.Entry<String, T> map : mongodbSqlInfo.getUpdateFile().entrySet()) {
+                updateKey = map.getKey();
+                updateValue = map.getValue();
+            }
+            list.add(new Document(updateKey , updateValue));
+        }
+
+        for (Map.Entry<String, T> map : mongodbSqlInfo.getFile().entrySet()) {
+            key = map.getKey();
+            value = map.getValue();
+        }
+
+        this.getCollection(mongodbSqlInfo).updateMany(Filters.eq(key,value), list);
     }
 }

@@ -25,7 +25,9 @@ public class MongodbSqlInfo<T> {
     private String collectionName;
     private String id;
     private Hashtable<String, T> file;
+    private Hashtable<String, T> updateFile;
     private ArrayList<Hashtable<String, T>> manyFile;
+    private ArrayList<Hashtable<String, T>> updateManyFile;
 
     public String getCollectionName() {
         return collectionName;
@@ -45,6 +47,22 @@ public class MongodbSqlInfo<T> {
 
     public ArrayList<Hashtable<String, T>> getManyFile() {
         return manyFile;
+    }
+
+    public Hashtable<String, T> getUpdateFile() {
+        return updateFile;
+    }
+
+    public ArrayList<Hashtable<String, T>> getUpdateManyFile() {
+        return updateManyFile;
+    }
+
+    public void setUpdateFile(Hashtable<String, T> updateFile) {
+        this.updateFile = updateFile;
+    }
+
+    public void setUpdateManyFile(ArrayList<Hashtable<String, T>> updateManyFile) {
+        this.updateManyFile = updateManyFile;
     }
 
     public void setManyFile(ArrayList<Hashtable<String, T>> manyFile) {
