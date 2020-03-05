@@ -21,9 +21,10 @@ import java.util.Hashtable;
  */
 
 public class MongodbSqlInfo<T, ValueT> {
+    private T model;
     private String database;
     private String collectionName;
-    private T model;
+    private ValueT data;
     private Hashtable<String, ValueT> file;
     private Hashtable<String, ValueT> updateFile;
     private ArrayList<Hashtable<String, ValueT>> manyFile;
@@ -55,6 +56,14 @@ public class MongodbSqlInfo<T, ValueT> {
 
     public T getModel() {
         return model;
+    }
+
+    public ValueT getData() {
+        return data;
+    }
+
+    public void setData(ValueT data) {
+        this.data = data;
     }
 
     public void setModel(T model) {

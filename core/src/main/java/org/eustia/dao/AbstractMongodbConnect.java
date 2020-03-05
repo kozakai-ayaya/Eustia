@@ -48,6 +48,10 @@ public class AbstractMongodbConnect<T, ValueT> implements MongodbOperation<T, Va
     public void insertData(MongodbSqlInfo<T, ValueT> mongodbSqlInfo) throws MongoException {
         Document document = new Document();
         for (Map.Entry<String, ValueT> map : mongodbSqlInfo.getFile().entrySet()) {
+            if ("_id".equals(map.getKey())) {
+                document.put("_id", map.getValue().toString());
+                continue;
+            }
             document.put(map.getKey(), map.getValue());
         }
         this.getCollection(mongodbSqlInfo).insertOne(document);
@@ -59,7 +63,7 @@ public class AbstractMongodbConnect<T, ValueT> implements MongodbOperation<T, Va
         for (Hashtable<String, ValueT> hashtable : mongodbSqlInfo.getManyFile()) {
             Document document = new Document();
             for (Map.Entry<String, ValueT> map : hashtable.entrySet()) {
-                document.put(map.getKey(), map.getValue());
+                document.put(map.getKey(), map.getValue().toString());
             }
             list.add(document);
         }

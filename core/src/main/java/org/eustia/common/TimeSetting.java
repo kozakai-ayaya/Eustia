@@ -30,7 +30,7 @@ public class TimeSetting {
 
     public boolean isHour() {
         Timestamp nowTime = new Timestamp(System.currentTimeMillis());
-        int hour = 1000 * 60;
+        int hour = 1000 * 60 * 60;
 
         if (this.timestamp.equals(new Timestamp(0))) {
             return true;

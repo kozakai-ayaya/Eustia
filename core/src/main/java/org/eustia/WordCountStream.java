@@ -26,7 +26,10 @@ import org.apache.flink.streaming.connectors.kafka.FlinkKafkaConsumer;
 import org.apache.flink.streaming.util.serialization.JSONKeyValueDeserializationSchema;
 import org.apache.flink.util.Collector;
 import org.eustia.common.TimeSetting;
+import org.eustia.dao.BasicDataMongodbConnect;
 import org.eustia.dao.WordCountConnect;
+import org.eustia.model.BasicDataInfo;
+import org.eustia.model.MongodbSqlInfo;
 import org.eustia.model.SqlInfo;
 import org.eustia.model.WordCountInfo;
 
@@ -53,6 +56,22 @@ public class WordCountStream {
                 new JSONKeyValueDeserializationSchema(true), properties);
         kafkaConsumer.setStartFromGroupOffsets();
         DataStream<ObjectNode> wordStream = streamExecutionEnvironment.addSource(kafkaConsumer);
+        wordStream.addSink(new RichSinkFunction<ObjectNode>() {
+            BasicDataMongodbConnect basicDataMongodbConnect;
+            @Override
+            public void open(Configuration parameters) throws Exception {
+                basicDataMongodbConnect = new BasicDataMongodbConnect();
+            }
+
+            @Override
+            public void invoke(ObjectNode value, Context context) throws Exception {
+                BasicDataInfo basicDataInfo = new BasicDataInfo();
+                MongodbSqlInfo<BasicDataInfo, Object> mongodbSqlInfo = new MongodbSqlInfo<>();
+                basicDataInfo.setDate(value);
+                mongodbSqlInfo.setModel(basicDataInfo);
+                basicDataMongodbConnect.insertData(mongodbSqlInfo);
+            }
+        });
         wordStream.process(new ProcessFunction<ObjectNode, Tuple2<Integer, String>>() {
             @Override
             public void processElement(ObjectNode jsonNodes, Context context, Collector<Tuple2<Integer, String>> collector) {

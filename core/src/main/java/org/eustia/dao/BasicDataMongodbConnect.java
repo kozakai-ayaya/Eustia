@@ -9,17 +9,20 @@ package org.eustia.dao;
  * @date: 2020/03/04 午後 02:13
  */
 
+import com.alibaba.fastjson.JSONObject;
 import com.mongodb.*;
 import com.mongodb.client.FindIterable;
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoCursor;
 import com.mongodb.client.MongoDatabase;
 import org.apache.flink.shaded.jackson2.com.fasterxml.jackson.databind.JsonNode;
+import org.apache.flink.shaded.jackson2.com.fasterxml.jackson.databind.ObjectMapper;
 import org.bson.Document;
 import org.eustia.dao.impl.MongodbOperation;
 import org.eustia.model.BasicDataInfo;
 import org.eustia.model.MongodbSqlInfo;
 
+import java.io.IOException;
 import java.util.Hashtable;
 
 /**
@@ -50,8 +53,8 @@ public class BasicDataMongodbConnect extends AbstractMongodbConnect<BasicDataInf
         mongodbSqlInfo.setCollectionName("BasicData");
         Hashtable<String, Object> hashtable = new Hashtable<>();
         JsonNode data = mongodbSqlInfo.getModel().getDate();
-        hashtable.put("_id", data.get("av"));
-        hashtable.put("data", data);
+        hashtable.put("_id", data.get("value").get("av").toString());
+        hashtable.put("data", data.toString());
         mongodbSqlInfo.setFile(hashtable);
         super.insertData(mongodbSqlInfo);
     }
@@ -104,5 +107,4 @@ public class BasicDataMongodbConnect extends AbstractMongodbConnect<BasicDataInf
         mongodbSqlInfo.setCollectionName("BasicData");
         super.deleteManyData(mongodbSqlInfo);
     }
-
 }
