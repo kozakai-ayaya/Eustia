@@ -27,5 +27,5 @@ public class MongodbConnect {
     static {
         MongoClientOptions option = MongoClientOptions.builder().connectTimeout(60000).build();
         mongoClient = new MongoClient(new ServerAddress("localhost",27017), option);
-}
+    }
 }

@@ -36,7 +36,7 @@ import java.util.Map;
 public class AbstractMongodbConnect<T, ValueT> implements MongodbOperation<T, ValueT> {
     @Override
     public MongoDatabase getDatabase(MongodbSqlInfo<T, ValueT> mongodbSqlInfo) throws MongoException {
-        return MongodbConnect.mongoClient.getDatabase("testtest");
+        return MongodbConnect.mongoClient.getDatabase("WordCount");
     }
 
     @Override

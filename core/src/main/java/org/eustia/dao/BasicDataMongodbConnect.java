@@ -84,6 +84,15 @@ public class BasicDataMongodbConnect extends AbstractMongodbConnect<BasicDataInf
     public void updateData(MongodbSqlInfo<BasicDataInfo, Object> mongodbSqlInfo) throws MongoException {
         mongodbSqlInfo.setDatabase("WordCount");
         mongodbSqlInfo.setCollectionName("BasicData");
+        Hashtable<String, Object> hashtable = new Hashtable<>();
+        Hashtable<String, Object> newHashtable = new Hashtable<>();
+        JsonNode data = mongodbSqlInfo.getModel().getDate();
+
+        hashtable.put("_id", data.get("value").get("av").toString());
+        newHashtable.put("data", data.toString());
+
+        mongodbSqlInfo.setFile(hashtable);
+        mongodbSqlInfo.setUpdateFile(newHashtable);
         super.updateData(mongodbSqlInfo);
     }
 

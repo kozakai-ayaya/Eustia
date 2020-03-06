@@ -79,7 +79,7 @@ public class AbstractDataBaseConnect<T> implements DataBaseOperation<T> {
     @Override
     public void createTable(SqlInfo<T> sqlInfo) throws SQLException {
         try (Connection connection = HikariCpConnect.syncPool.getConnection()) {
-            String sql = "CREATE TABLE " + sqlInfo.getTable() + " " + sqlInfo.getValue();
+            String sql = "CREATE TABLE IF NOT EXISTS " + sqlInfo.getTable() + " " + sqlInfo.getValue() ;
             PreparedStatement preparedStatement = connection.prepareStatement(sql);
             System.out.println(preparedStatement.toString());
             preparedStatement.execute();

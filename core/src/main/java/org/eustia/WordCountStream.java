@@ -9,6 +9,7 @@ package org.eustia;
  * @date: 2020/02/04 午前 12:17
  */
 
+import com.mongodb.MongoException;
 import org.ansj.domain.Result;
 import org.ansj.domain.Term;
 import org.ansj.splitWord.analysis.NlpAnalysis;
@@ -56,6 +57,7 @@ public class WordCountStream {
                 new JSONKeyValueDeserializationSchema(true), properties);
         kafkaConsumer.setStartFromGroupOffsets();
         DataStream<ObjectNode> wordStream = streamExecutionEnvironment.addSource(kafkaConsumer);
+
         wordStream.addSink(new RichSinkFunction<ObjectNode>() {
             BasicDataMongodbConnect basicDataMongodbConnect;
             @Override
@@ -69,9 +71,15 @@ public class WordCountStream {
                 MongodbSqlInfo<BasicDataInfo, Object> mongodbSqlInfo = new MongodbSqlInfo<>();
                 basicDataInfo.setDate(value);
                 mongodbSqlInfo.setModel(basicDataInfo);
-                basicDataMongodbConnect.insertData(mongodbSqlInfo);
+                try {
+                    basicDataMongodbConnect.insertData(mongodbSqlInfo);
+                } catch (MongoException e) {
+                    System.out.println(e);
+                    basicDataMongodbConnect.updateData(mongodbSqlInfo);
+                }
             }
         });
+
         wordStream.process(new ProcessFunction<ObjectNode, Tuple2<Integer, String>>() {
             @Override
             public void processElement(ObjectNode jsonNodes, Context context, Collector<Tuple2<Integer, String>> collector) {
