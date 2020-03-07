@@ -9,20 +9,17 @@ package org.eustia.dao;
  * @date: 2020/03/04 午後 02:13
  */
 
-import com.alibaba.fastjson.JSONObject;
 import com.mongodb.*;
 import com.mongodb.client.FindIterable;
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoCursor;
 import com.mongodb.client.MongoDatabase;
 import org.apache.flink.shaded.jackson2.com.fasterxml.jackson.databind.JsonNode;
-import org.apache.flink.shaded.jackson2.com.fasterxml.jackson.databind.ObjectMapper;
 import org.bson.Document;
 import org.eustia.dao.impl.MongodbOperation;
 import org.eustia.model.BasicDataInfo;
 import org.eustia.model.MongodbSqlInfo;
 
-import java.io.IOException;
 import java.util.Hashtable;
 
 /**

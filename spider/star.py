@@ -30,7 +30,7 @@ class BiliSpider:
 
     def star(self):
         av_flag = 50
-        av_number = 20026514
+        av_number = 20000000
 
         while av_number < 40000000:
             if av_flag == av_number:
