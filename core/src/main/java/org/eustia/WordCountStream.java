@@ -52,7 +52,7 @@ public class WordCountStream {
         Properties properties = new Properties();
         properties.setProperty("bootstrap.servers", "localhost:9092");
         properties.setProperty("zookeeper.connect", "localhost:2181");
-        properties.setProperty("group.id", "kafka.test");
+        properties.setProperty("group.id", "WordCount.stream");
         FlinkKafkaConsumer<ObjectNode> kafkaConsumer = new FlinkKafkaConsumer<>("Word_Count",
                 new JSONKeyValueDeserializationSchema(true), properties);
         kafkaConsumer.setStartFromGroupOffsets();
@@ -93,16 +93,20 @@ public class WordCountStream {
 
                     while (field.hasNext()) {
                         Map.Entry<String, JsonNode> message = field.next();
-                        int times = Integer.parseInt(message.getKey()) / (24 * 60 * 60);
-                        Result parse = NlpAnalysis.parse(message.getValue().toString().replaceAll("[\\pP\\pS\\pZ]", ""));
-
-                        for (Term words : parse) {
-                            String word = words.toString().split("/")[0];
-                            if (word.length() <= 1) {
-                                continue;
+                        Iterator<Map.Entry<String, JsonNode>> messageField = message.getValue().fields();
+                        while (messageField.hasNext()) {
+                            Map.Entry<String, JsonNode> messageInfo = messageField.next();
+                            System.out.println(messageInfo);
+                            int times = Integer.parseInt(messageInfo.getKey()) / (24 * 60 * 60);
+                            Result parse = NlpAnalysis.parse(messageInfo.getValue().toString().replaceAll("[\\pP\\pS\\pZ]", ""));
+                            for (Term words : parse) {
+                                String word = words.toString().split("/")[0];
+                                if (word.length() <= 1) {
+                                    continue;
+                                }
+                                Tuple2<Integer, String> text = new Tuple2<>(times, word);
+                                collector.collect(text);
                             }
-                            Tuple2<Integer, String> text = new Tuple2<>(times, word);
-                            collector.collect(text);
                         }
                     }
                 }
