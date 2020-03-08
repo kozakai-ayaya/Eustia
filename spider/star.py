@@ -19,8 +19,7 @@ from kafka import KafkaProducer
 
 class BiliSpider:
     def __init__(self):
-       # self.producer = KafkaProducer(bootstrap_servers='127.0.0.1:9092')
-
+        self.producer = KafkaProducer(bootstrap_servers='127.0.0.1:9092')
         self.video_url = "https://www.bilibili.com/video/av"
         self.video_base_info_api_url = "https://api.bilibili.com/archive_stat/stat?aid="
         self.video_list_info_api_url = "https://api.bilibili.com/x/player/pagelist?aid="
@@ -30,9 +29,8 @@ class BiliSpider:
         self.user_info_api_url = "https://api.bilibili.com/x/web-interface/card?mid="
 
     def star(self):
-        av_flag = 50
         av_number = 23002339
-        self.user()
+        #self.user()
 
         while av_number < 40000000:
             video_url = self.video_url + str(av_number)
@@ -64,15 +62,16 @@ class BiliSpider:
         while uid_number < 4000000:
             user_url = self.user_info_api_url + str(uid_number)
             try:
-                get_requests = requests.get(user_url, timeout=(10, 27))
-                user_bs = BeautifulSoup(get_requests.text, "html.parser")
-                print(user_bs)
+                get_user_info = json.loads(requests.get(user_url, timeout=(10, 27)).text)
             except Exception as e:
                 print(e)
                 time.sleep(random.randint(60, 70))
-                get_requests = requests.get(user_url, timeout=(10, 27))
-                user_bs = BeautifulSoup(get_requests.text, "html.parser")
-            # self.producer.send('User_Info', bytes(bangumi_json, "UTF-8"))
+                get_user_info = json.loads(requests.get(user_url, timeout=(10, 27)).text)
+
+            crc32 = binascii.crc32(str(uid_number).encode("utf-8"))
+            get_user_info["crc32"] = crc32
+            user_json = json.loads(get_user_info, ensure_ascii=False)
+            self.producer.send('User_Info', bytes(user_json, "UTF-8"))
 
     def bangumi(self, av_number):
         bangumi_base_info_api_url = self.video_base_info_api_url + str(av_number) + "&jsonp=jsonp"
@@ -100,7 +99,7 @@ class BiliSpider:
             print(e)
 
         bangumi_json = json.dumps(bangumi_info, ensure_ascii=False)
-        #self.producer.send('Word_Count', bytes(bangumi_json, "UTF-8"))
+        self.producer.send('Word_Count', bytes(bangumi_json, "UTF-8"))
         print(bangumi_json)
 
     def video(self, av_number, video_bs):
@@ -170,7 +169,7 @@ class BiliSpider:
             video_info["replies"] = self.video_replies_info(av_number)
             info_json = json.dumps(video_info, ensure_ascii=False)
             print(info_json)
-            #self.producer.send('Word_Count', bytes(info_json, "UTF-8"))
+            self.producer.send('Word_Count', bytes(info_json, "UTF-8"))
         except Exception as e:
             print(e)
 
@@ -251,10 +250,6 @@ class BiliSpider:
                     message_info = {}
                     # 提取发送者ID
                     sender = str(i).split(",")[6]
-                    # for n in range(1, 1000000000):
-                    #     print(binascii.crc32(str(n).encode("utf-8")))
-                    #     if str(binascii.crc32(str(n).encode("utf-8"))) == sender:
-                    #         sender = int(n)
                     # 提取时间戳
                     video_times = str(i).split(",")[4]
                     # 提取弹幕内容
