@@ -1,4 +1,4 @@
-package org.eustia.dao;
+package org.eustia.common.dao;
 /*
  * @package: org.eustia.dao
  * @program: AbstractMongodbConnect
@@ -16,9 +16,9 @@ import com.mongodb.client.MongoCursor;
 import com.mongodb.client.MongoDatabase;
 import com.mongodb.client.model.Filters;
 import org.bson.Document;
-import org.eustia.common.MongodbConnect;
-import org.eustia.dao.impl.MongodbOperation;
-import org.eustia.model.MongodbSqlInfo;
+import org.eustia.common.dao.impl.MongodbOperation;
+import org.eustia.common.db.MongodbConnect;
+import org.eustia.common.model.MongodbSqlInfo;
 
 import java.util.ArrayList;
 import java.util.Hashtable;

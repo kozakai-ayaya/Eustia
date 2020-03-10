@@ -16,9 +16,10 @@ import com.mongodb.client.MongoCursor;
 import com.mongodb.client.MongoDatabase;
 import org.apache.flink.shaded.jackson2.com.fasterxml.jackson.databind.JsonNode;
 import org.bson.Document;
-import org.eustia.dao.impl.MongodbOperation;
+import org.eustia.common.dao.AbstractMongodbConnect;
+import org.eustia.common.dao.impl.MongodbOperation;
 import org.eustia.model.BasicDataInfo;
-import org.eustia.model.MongodbSqlInfo;
+import org.eustia.common.model.MongodbSqlInfo;
 
 import java.util.Hashtable;
 

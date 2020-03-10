@@ -1,4 +1,4 @@
-package org.eustia.dao;
+package org.eustia.common.dao;
 /*
  * @package: org.eustia.dao
  * @program: AbstractDataBaseConnect
@@ -9,9 +9,9 @@ package org.eustia.dao;
  * @date: 2020/02/22 午後 08:54
  */
 
-import org.eustia.common.HikariCpConnect;
-import org.eustia.dao.impl.DataBaseOperation;
-import org.eustia.model.SqlInfo;
+import org.eustia.common.dao.impl.DataBaseOperation;
+import org.eustia.common.db.HikariCpConnect;
+import org.eustia.common.model.SqlInfo;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -116,7 +116,7 @@ public class AbstractDataBaseConnect<T> implements DataBaseOperation<T> {
     }
 
     @Override
-    public void insertDuplicateUpdateData(SqlInfo<T> sqlInfo) throws SQLException {
+    public void insertDuplicateUpdateData(SqlInfo<T>  sqlInfo) throws SQLException {
         try (Connection connection = HikariCpConnect.syncPool.getConnection()) {
             String sql = "INSERT INTO " + sqlInfo.getTable() + " " + sqlInfo.getKey() + " VALUES " + sqlInfo.getValue()
                     + " ON DUPLICATE KEY UPDATE " + sqlInfo.getUpdateKey() + " = " + sqlInfo.getOperation();
@@ -126,7 +126,7 @@ public class AbstractDataBaseConnect<T> implements DataBaseOperation<T> {
             for (int i = 1, value = 0; value < list.size(); i++, value++) {
                 preparedStatement.setObject(i, list.get(value));
             }
-           // System.out.println(preparedStatement.toString());
+            System.out.println(preparedStatement.toString());
             try {
                 preparedStatement.execute();
             } catch (Exception e) {

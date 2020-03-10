@@ -26,12 +26,12 @@ import org.apache.flink.streaming.api.windowing.time.Time;
 import org.apache.flink.streaming.connectors.kafka.FlinkKafkaConsumer;
 import org.apache.flink.streaming.util.serialization.JSONKeyValueDeserializationSchema;
 import org.apache.flink.util.Collector;
-import org.eustia.common.TimeSetting;
+import org.eustia.common.time.TimeSetting;
 import org.eustia.dao.BasicDataMongodbConnect;
 import org.eustia.dao.WordCountConnect;
 import org.eustia.model.BasicDataInfo;
-import org.eustia.model.MongodbSqlInfo;
-import org.eustia.model.SqlInfo;
+import org.eustia.common.model.MongodbSqlInfo;
+import org.eustia.common.model.SqlInfo;
 import org.eustia.model.WordCountInfo;
 
 import java.util.*;

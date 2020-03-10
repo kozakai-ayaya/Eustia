@@ -1,7 +1,7 @@
-package org.eustia.common;
+package org.eustia.common.time;
 /*
  * @package: org.eustia.common
- * @program: TimeSetting
+ * @program: org.eustia.TimeSetting
  * @description
  *
  * @author:  rinne
@@ -13,7 +13,7 @@ import java.sql.Timestamp;
 import java.text.SimpleDateFormat;
 
 /**
- * @classname: TimeSetting
+ * @classname: org.eustia.TimeSetting
  * @description: %{description}
  * @author: rinne
  * @date: 2020/03/01 午後 07:34

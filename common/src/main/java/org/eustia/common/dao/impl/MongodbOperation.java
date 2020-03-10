@@ -1,4 +1,4 @@
-package org.eustia.dao.impl;
+package org.eustia.common.dao.impl;
 /*
  * @package: org.eustia.dao.impl
  * @program: MongodbOperation
@@ -15,7 +15,7 @@ import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoCursor;
 import com.mongodb.client.MongoDatabase;
 import org.bson.Document;
-import org.eustia.model.MongodbSqlInfo;
+import org.eustia.common.model.MongodbSqlInfo;
 
 /**
  * @interface name: MongodbOperation

@@ -1,4 +1,4 @@
-package org.eustia.dao.impl;
+package org.eustia.common.dao.impl;
 /*
  * @package: org.eustia.dao.impl
  * @program: DataBaseOperation
@@ -9,7 +9,7 @@ package org.eustia.dao.impl;
  * @date: 2020/02/22 午後 06:46
  */
 
-import org.eustia.model.SqlInfo;
+import org.eustia.common.model.SqlInfo;
 
 import java.sql.SQLException;
 import java.util.ArrayList;

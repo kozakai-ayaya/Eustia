@@ -1,4 +1,4 @@
-package org.eustia.model;
+package org.eustia.common.model;
 /*
  * @package: org.eustia.model
  * @program: MongodbSqlInfo

@@ -9,8 +9,9 @@ package org.eustia.dao;
  * @date: 2020/02/22 午後 06:47
  */
 
-import org.eustia.dao.impl.DataBaseOperation;
-import org.eustia.model.SqlInfo;
+import org.eustia.common.dao.AbstractDataBaseConnect;
+import org.eustia.common.dao.impl.DataBaseOperation;
+import org.eustia.common.model.SqlInfo;
 import org.eustia.model.WordCountInfo;
 
 import java.sql.SQLException;
