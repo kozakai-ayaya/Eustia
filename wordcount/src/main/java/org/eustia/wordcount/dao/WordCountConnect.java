@@ -1,6 +1,6 @@
-package org.eustia.dao;
+package org.eustia.wordcount.dao;
 /*
- * @package: org.eustia.dao
+ * @package: org.eustia.wordcount.dao
  * @program: WordCountConnect
  * @description
  *
@@ -12,7 +12,7 @@ package org.eustia.dao;
 import org.eustia.common.dao.AbstractDataBaseConnect;
 import org.eustia.common.dao.impl.DataBaseOperation;
 import org.eustia.common.model.SqlInfo;
-import org.eustia.model.WordCountInfo;
+import org.eustia.wordcount.model.WordCountInfo;
 
 import java.sql.SQLException;
 import java.util.ArrayList;

@@ -1,6 +1,6 @@
-package org.eustia;
+package org.eustia.wordcount;
 /*
- * @package: org.eustia
+ * @package: org.eustia.wordcount
  * @program: test
  * @description
  *
@@ -8,6 +8,7 @@ package org.eustia;
  * @e-mail:  minami.rinne.me@gmail.com
  * @date: 2020/02/04 午前 12:17
  */
+
 
 import com.mongodb.MongoException;
 import org.ansj.domain.Result;
@@ -27,12 +28,12 @@ import org.apache.flink.streaming.connectors.kafka.FlinkKafkaConsumer;
 import org.apache.flink.streaming.util.serialization.JSONKeyValueDeserializationSchema;
 import org.apache.flink.util.Collector;
 import org.eustia.common.time.TimeSetting;
-import org.eustia.dao.BasicDataMongodbConnect;
-import org.eustia.dao.WordCountConnect;
-import org.eustia.model.BasicDataInfo;
+import org.eustia.wordcount.dao.BasicDataMongodbConnect;
+import org.eustia.wordcount.dao.WordCountConnect;
 import org.eustia.common.model.MongodbSqlInfo;
 import org.eustia.common.model.SqlInfo;
-import org.eustia.model.WordCountInfo;
+import org.eustia.wordcount.model.BasicDataInfo;
+import org.eustia.wordcount.model.WordCountInfo;
 
 import java.util.*;
 

@@ -1,6 +1,6 @@
-package org.eustia.dao;
+package org.eustia.wordcount.dao;
 /*
- * @package: org.eustia.dao
+ * @package: org.eustia.wordcount.dao
  * @program: BasicDataMongodbConnect
  * @description
  *
@@ -18,8 +18,8 @@ import org.apache.flink.shaded.jackson2.com.fasterxml.jackson.databind.JsonNode;
 import org.bson.Document;
 import org.eustia.common.dao.AbstractMongodbConnect;
 import org.eustia.common.dao.impl.MongodbOperation;
-import org.eustia.model.BasicDataInfo;
 import org.eustia.common.model.MongodbSqlInfo;
+import org.eustia.wordcount.model.BasicDataInfo;
 
 import java.util.Hashtable;
 
@@ -50,8 +50,8 @@ public class BasicDataMongodbConnect extends AbstractMongodbConnect<BasicDataInf
         mongodbSqlInfo.setDatabase("WordCount");
         mongodbSqlInfo.setCollectionName("BasicData");
         Hashtable<String, Object> hashtable = new Hashtable<>();
-        JsonNode data = mongodbSqlInfo.getModel().getDate();
-        hashtable.put("_id", data.get("value").get("av").toString());
+        JsonNode data = mongodbSqlInfo.getModel().getData().get("value");
+        hashtable.put("_id", data.get("av").toString());
         hashtable.put("data", data.toString());
         mongodbSqlInfo.setFile(hashtable);
         super.insertData(mongodbSqlInfo);
@@ -84,9 +84,9 @@ public class BasicDataMongodbConnect extends AbstractMongodbConnect<BasicDataInf
         mongodbSqlInfo.setCollectionName("BasicData");
         Hashtable<String, Object> hashtable = new Hashtable<>();
         Hashtable<String, Object> newHashtable = new Hashtable<>();
-        JsonNode data = mongodbSqlInfo.getModel().getDate();
+        JsonNode data = mongodbSqlInfo.getModel().getData().get("value");
 
-        hashtable.put("_id", data.get("value").get("av").toString());
+        hashtable.put("_id", data.get("av").toString());
         newHashtable.put("data", data.toString());
 
         mongodbSqlInfo.setFile(hashtable);

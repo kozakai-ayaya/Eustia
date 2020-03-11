@@ -30,7 +30,7 @@ class BiliSpider:
 
     def star(self):
         av_number = 23002339
-        #self.user()
+        self.user()
 
         while av_number < 40000000:
             video_url = self.video_url + str(av_number)
@@ -70,7 +70,9 @@ class BiliSpider:
 
             crc32 = binascii.crc32(str(uid_number).encode("utf-8"))
             get_user_info["crc32"] = crc32
-            user_json = json.loads(get_user_info, ensure_ascii=False)
+            user_json = json.dumps(get_user_info, ensure_ascii=False)
+            print(user_json)
+            uid_number += 1
             self.producer.send('User_Info', bytes(user_json, "UTF-8"))
 
     def bangumi(self, av_number):

@@ -1,6 +1,6 @@
 package org.eustia.common.dao;
 /*
- * @package: org.eustia.dao
+ * @package: org.eustia.common.dao
  * @program: AbstractDataBaseConnect
  * @description
  *

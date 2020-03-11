@@ -1,6 +1,6 @@
-package org.eustia.model;
+package org.eustia.wordcount.model;
 /*
- * @package: org.eustia.model
+ * @package: org.eustia.wordcount.model
  * @program: WordCountInfo
  * @description
  *

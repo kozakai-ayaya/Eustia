@@ -1,6 +1,6 @@
 package org.eustia.common.dao;
 /*
- * @package: org.eustia.dao
+ * @package: org.eustia.common.dao
  * @program: AbstractMongodbConnect
  * @description
  *
@@ -36,7 +36,7 @@ import java.util.Map;
 public class AbstractMongodbConnect<T, ValueT> implements MongodbOperation<T, ValueT> {
     @Override
     public MongoDatabase getDatabase(MongodbSqlInfo<T, ValueT> mongodbSqlInfo) throws MongoException {
-        return MongodbConnect.mongoClient.getDatabase("WordCount");
+        return MongodbConnect.mongoClient.getDatabase(mongodbSqlInfo.getDatabase());
     }
 
     @Override

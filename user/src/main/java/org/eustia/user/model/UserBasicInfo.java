@@ -1,38 +1,38 @@
-package org.eustia.model;
+package org.eustia.user.model;
 /*
- * @package: org.eustia.model
- * @program: BasicDataInfo
+ * @package: org.eustia.user.model
+ * @program: UserBasicInfo
  * @description
  *
  * @author:  rinne
  * @e-mail:  minami.rinne.me@gmail.com
- * @date: 2020/03/04 午後 05:09
+ * @date: 2020/03/11 午前 09:55
  */
 
 import org.apache.flink.shaded.jackson2.com.fasterxml.jackson.databind.JsonNode;
 
 /**
- * @classname: BasicDataInfo
+ * @classname: UserBasicInfo
  * @description: %{description}
  * @author: rinne
- * @date: 2020/03/04 午後 05:09
+ * @date: 2020/03/11 午前 09:55
  * @Version 1.0
  */
 
-public class BasicDataInfo {
+public class UserBasicInfo {
     private String id;
-    private JsonNode date;
+    private JsonNode data;
 
     public String getId() {
         return id;
     }
 
-    public JsonNode getDate() {
-        return date;
+    public JsonNode getData() {
+        return data;
     }
 
-    public void setDate(JsonNode date) {
-        this.date = date;
+    public void setData(JsonNode data) {
+        this.data = data;
     }
 
     public void setId(String id) {

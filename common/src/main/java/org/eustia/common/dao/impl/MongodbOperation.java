@@ -1,6 +1,6 @@
 package org.eustia.common.dao.impl;
 /*
- * @package: org.eustia.dao.impl
+ * @package: org.eustia.common.dao.impl
  * @program: MongodbOperation
  * @description
  *

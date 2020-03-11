@@ -1,6 +1,6 @@
 package org.eustia.common.db;
 /*
- * @package: org.eustia.common
+ * @package: org.eustia.common.db
  * @program: MongodbConnect
  * @description
  *
