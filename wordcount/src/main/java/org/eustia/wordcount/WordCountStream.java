@@ -81,9 +81,9 @@ public class WordCountStream {
             }
         });
 
-        wordStream.process(new ProcessFunction<ObjectNode, Tuple2<Integer, String>>() {
+        wordStream.process(new ProcessFunction<ObjectNode, Tuple2<Long, String>>() {
             @Override
-            public void processElement(ObjectNode jsonNodes, Context context, Collector<Tuple2<Integer, String>> collector) {
+            public void processElement(ObjectNode jsonNodes, Context context, Collector<Tuple2<Long, String>> collector) {
 
                 JsonNode value = jsonNodes.get("value");
                 JsonNode bulletScreen = value.get("bullet_screen");
@@ -97,15 +97,14 @@ public class WordCountStream {
                         Iterator<Map.Entry<String, JsonNode>> messageField = message.getValue().fields();
                         while (messageField.hasNext()) {
                             Map.Entry<String, JsonNode> messageInfo = messageField.next();
-                            System.out.println(messageInfo);
-                            int times = Integer.parseInt(messageInfo.getKey()) / (24 * 60 * 60);
+                            long times = (Long.parseLong(messageInfo.getKey()) / (5 * 60)) * (5 * 60 * 1000);
                             Result parse = NlpAnalysis.parse(messageInfo.getValue().toString().replaceAll("[\\pP\\pS\\pZ]", ""));
                             for (Term words : parse) {
                                 String word = words.toString().split("/")[0];
                                 if (word.length() <= 1) {
                                     continue;
                                 }
-                                Tuple2<Integer, String> text = new Tuple2<>(times, word);
+                                Tuple2<Long, String> text = new Tuple2<>(times, word);
                                 collector.collect(text);
                             }
                         }
@@ -115,7 +114,7 @@ public class WordCountStream {
                 JsonNode replies = value.get("replies");
                 for (JsonNode repliesInfo : replies) {
                     JsonNode repliesMessage = repliesInfo.get("message");
-                    int times = Integer.parseInt(repliesInfo.get("time").toString()) / (24 * 60 * 60);
+                    long times = (Long.parseLong(repliesInfo.get("time").toString()) / (24 * 60 * 60)) * (24 * 60 * 60 * 1000);
                     Result parse = NlpAnalysis.parse(repliesMessage.toString().replaceAll("[\\pP\\pS\\pZ]", ""));
 
                     for (Term words : parse) {
@@ -123,33 +122,33 @@ public class WordCountStream {
                         if (word.length() <= 1) {
                             continue;
                         }
-                        Tuple2<Integer, String> text = new Tuple2<>(times, word);
+                        Tuple2<Long, String> text = new Tuple2<>(times, word);
                         collector.collect(text);
                     }
                 }
             }
         })
-                .flatMap(new FlatMapFunction<Tuple2<Integer, String>, Tuple2<Tuple2<Integer, String>, Integer>>() {
+                .flatMap(new FlatMapFunction<Tuple2<Long, String>, Tuple2<Tuple2<Long, String>, Integer>>() {
                     @Override
-                    public void flatMap(Tuple2<Integer, String> integerStringTuple2, Collector<Tuple2<Tuple2<Integer, String>, Integer>> collector) {
-                        Tuple2<Tuple2<Integer, String>, Integer> tuple = new Tuple2<>(integerStringTuple2, 1);
+                    public void flatMap(Tuple2<Long, String> integerStringTuple2, Collector<Tuple2<Tuple2<Long, String>, Integer>> collector) {
+                        Tuple2<Tuple2<Long, String>, Integer> tuple = new Tuple2<>(integerStringTuple2, 1);
                         collector.collect(tuple);
                     }
                 })
                 .keyBy(0)
-                .timeWindow(Time.seconds(1))
+                .timeWindow(Time.seconds(300))
                 .sum(1)
-                .process(new ProcessFunction<Tuple2<Tuple2<Integer, String>, Integer>, Tuple2<Tuple2<Integer, String>, Integer>>() {
+                .process(new ProcessFunction<Tuple2<Tuple2<Long, String>, Integer>, Tuple2<Tuple2<Long, String>, Integer>>() {
 
                     @Override
-                    public void processElement(Tuple2<Tuple2<Integer, String>, Integer> value, Context ctx,
-                                               Collector<Tuple2<Tuple2<Integer, String>, Integer>> out) {
+                    public void processElement(Tuple2<Tuple2<Long, String>, Integer> value, Context ctx,
+                                               Collector<Tuple2<Tuple2<Long, String>, Integer>> out) {
                         if ((int) value.getField(1) >= needCount) {
                             out.collect(value);
                         }
                     }
                 })
-                .addSink(new RichSinkFunction<Tuple2<Tuple2<Integer, String>, Integer>>() {
+                .addSink(new RichSinkFunction<Tuple2<Tuple2<Long, String>, Integer>>() {
                     private TimeSetting timeSetting;
 
                     @Override
@@ -159,11 +158,11 @@ public class WordCountStream {
                     }
 
                     @Override
-                    public void invoke(Tuple2<Tuple2<Integer, String>, Integer> value, Context context) throws Exception {
+                    public void invoke(Tuple2<Tuple2<Long, String>, Integer> value, Context context) throws Exception {
                         WordCountConnect wordCountConnect = new WordCountConnect();
                         WordCountInfo wordCountInfo = new WordCountInfo();
                         SqlInfo<WordCountInfo> sqlInfo = new SqlInfo<>();
-                        Tuple2<Integer, String> key = value.getField(0);
+                        Tuple2<Long, String> key = value.getField(0);
 
                         wordCountInfo.setTimeStamp(key.getField(0));
                         wordCountInfo.setWord(key.getField(1));

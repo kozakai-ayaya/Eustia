@@ -39,7 +39,7 @@ public class WordCountConnect extends AbstractDataBaseConnect<WordCountInfo> imp
     @Override
     public void createTable(SqlInfo<WordCountInfo> sqlInfo) throws SQLException {
         sqlInfo.setTable("hot_word" + sqlInfo.getTable());
-        sqlInfo.setValue("(times_stamp int(11) NOT NULL, " +
+        sqlInfo.setValue("(times_stamp bigint(20) NOT NULL, " +
                          "word varchar(255) NOT NULL, " +
                          "count int(11) DEFAULT NULL, " +
                          "PRIMARY KEY (times_stamp,  word)) " +

@@ -29,10 +29,10 @@ class BiliSpider:
         self.user_info_api_url = "https://api.bilibili.com/x/web-interface/card?mid="
 
     def star(self):
-        av_number = 23002339
-        self.user()
+        av_number = 1
+        #self.user()
 
-        while av_number < 40000000:
+        while av_number < 10000000:
             video_url = self.video_url + str(av_number)
 
             try:

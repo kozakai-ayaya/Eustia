@@ -18,7 +18,7 @@ package org.eustia.wordcount.model;
  */
 
 public class WordCountInfo {
-    private int timeStamp;
+    private long timeStamp;
     private String word;
     private int count;
 
@@ -30,7 +30,7 @@ public class WordCountInfo {
         return count;
     }
 
-    public int getTimeStamp() {
+    public long getTimeStamp() {
         return timeStamp;
     }
 
@@ -38,7 +38,7 @@ public class WordCountInfo {
         this.count = count;
     }
 
-    public void setTimeStamp(int timeStamp) {
+    public void setTimeStamp(long timeStamp) {
         this.timeStamp = timeStamp;
     }
 
