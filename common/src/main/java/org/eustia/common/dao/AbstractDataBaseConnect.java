@@ -81,7 +81,7 @@ public class AbstractDataBaseConnect<T> implements DataBaseOperation<T> {
         try (Connection connection = HikariCpConnect.syncPool.getConnection()) {
             String sql = "CREATE TABLE IF NOT EXISTS " + sqlInfo.getTable() + " " + sqlInfo.getValue() ;
             PreparedStatement preparedStatement = connection.prepareStatement(sql);
-            System.out.println(preparedStatement.toString());
+            //System.out.println(preparedStatement.toString());
             preparedStatement.execute();
         }
     }
@@ -126,7 +126,7 @@ public class AbstractDataBaseConnect<T> implements DataBaseOperation<T> {
             for (int i = 1, value = 0; value < list.size(); i++, value++) {
                 preparedStatement.setObject(i, list.get(value));
             }
-            System.out.println(preparedStatement.toString());
+            //System.out.println(preparedStatement.toString());
             try {
                 preparedStatement.execute();
             } catch (Exception e) {
@@ -164,7 +164,7 @@ public class AbstractDataBaseConnect<T> implements DataBaseOperation<T> {
             for (int i = 1, value = 0; value < list.size(); i++, value++) {
                 preparedStatement.setObject(i, list.get(value));
             }
-            System.out.println(preparedStatement.toString());
+            //System.out.println(preparedStatement.toString());
             try {
                 preparedStatement.execute();
             } catch (Exception e) {

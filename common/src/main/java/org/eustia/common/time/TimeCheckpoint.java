@@ -13,18 +13,18 @@ import java.sql.Timestamp;
 import java.text.SimpleDateFormat;
 
 /**
- * @classname: org.eustia.TimeSetting
+ * @classname: org.eustia.Checkpoint
  * @description: %{description}
  * @author: rinne
  * @date: 2020/03/01 午後 07:34
  * @Version 1.0
  */
 
-public class TimeSetting {
+public class TimeCheckpoint {
     private int flag = 0;
     private Timestamp timestamp;
 
-    public TimeSetting() {
+    public TimeCheckpoint() {
         this.timestamp = new Timestamp(0);
     }
 

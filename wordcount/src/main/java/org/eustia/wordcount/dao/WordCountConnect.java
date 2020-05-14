@@ -42,8 +42,9 @@ public class WordCountConnect extends AbstractDataBaseConnect<WordCountInfo> imp
         sqlInfo.setValue("(times_stamp bigint(20) NOT NULL, " +
                          "word varchar(255) NOT NULL, " +
                          "count int(11) DEFAULT NULL, " +
-                         "PRIMARY KEY (times_stamp,  word)) " +
-                         "ENGINE=InnoDB");
+                         "PRIMARY KEY (times_stamp,  word), " +
+                         "KEY times_stamp (times_stamp)," +
+                         "KEY word (word)) ENGINE=InnoDB");
         super.createTable(sqlInfo);
     }
 
