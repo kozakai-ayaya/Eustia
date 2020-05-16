@@ -38,6 +38,7 @@ import org.eustia.wordcount.model.EmotionalAnalysisInfo;
 import org.eustia.wordcount.model.WordCountInfo;
 
 import java.io.*;
+import java.nio.charset.StandardCharsets;
 import java.util.*;
 
 /**
@@ -53,29 +54,29 @@ public class WordCountStream {
     static TreeSet<String> positiveWord = new TreeSet<>();
 
     static {
-        File negativeWordFile = new File(WordCountStream.class.getResource("/ntusd-negative.txt").getFile());
-        File positiveWordFile = new File(WordCountStream.class.getResource("/ntusd-positive.txt").getFile());
+        InputStream negativeWordFile = Thread.currentThread().getContextClassLoader().getResourceAsStream("ntusd-negative.txt");
+        InputStream positiveWordFile = Thread.currentThread().getContextClassLoader().getResourceAsStream("ntusd-positive.txt");
 
-        try (FileReader fileReader = new FileReader(negativeWordFile)) {
-            try (BufferedReader bufferedReader = new BufferedReader(fileReader)) {
+        if (negativeWordFile != null) {
+            try (BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(negativeWordFile, StandardCharsets.UTF_8))) {
                 String word;
                 while ((word = bufferedReader.readLine()) != null) {
                     negativeWord.add(word);
                 }
+            } catch (IOException e) {
+                e.printStackTrace();
             }
-        } catch (IOException e) {
-            e.printStackTrace();
         }
 
-        try (FileReader fileReader = new FileReader(positiveWordFile)) {
-            try (BufferedReader bufferedReader = new BufferedReader(fileReader)) {
+        if (positiveWordFile != null) {
+            try (BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(positiveWordFile, StandardCharsets.UTF_8))) {
                 String word;
                 while ((word = bufferedReader.readLine()) != null) {
                     positiveWord.add(word);
                 }
+            } catch (IOException e) {
+                e.printStackTrace();
             }
-        } catch (IOException e) {
-            e.printStackTrace();
         }
     }
 
@@ -175,7 +176,7 @@ public class WordCountStream {
                     }
                 })
                 .keyBy(0)
-                .timeWindow(Time.seconds(300))
+                //.timeWindow(Time.seconds(300))
                 .sum(1)
                 .process(new ProcessFunction<Tuple2<Tuple2<Long, String>, Integer>, Tuple2<Tuple2<Long, String>, Integer>>() {
 
@@ -280,7 +281,6 @@ public class WordCountStream {
                 } else if (positiveWord.contains(word)) {
                     return "positive";
                 } else {
-                    System.out.println(word);
                     return "unknown";
                 }
             }
@@ -293,7 +293,7 @@ public class WordCountStream {
                     }
                 })
                 .keyBy(0)
-                .timeWindow(Time.seconds(300))
+                //.timeWindow(Time.seconds(300))
                 .sum(1)
                 .addSink(new RichSinkFunction<Tuple2<String, Integer>>() {
                     private TimeCheckpoint timeCheckpoint;
