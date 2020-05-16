@@ -29,7 +29,7 @@ public class HikariCpConnect {
     public static HikariDataSource syncPool;
 
     static {
-        File jsonFile = new File("src/main/resources/word_count_db.json");
+         File jsonFile = new File(HikariCpConnect.class.getResource("/word_count_db.json").getFile());
         try (Reader reader = new InputStreamReader(new FileInputStream(jsonFile), StandardCharsets.UTF_8)) {
             StringBuilder stringBuilder = new StringBuilder();
 
