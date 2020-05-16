@@ -53,8 +53,8 @@ public class WordCountStream {
     static TreeSet<String> positiveWord = new TreeSet<>();
 
     static {
-        File negativeWordFile = new File(WordCountStream.class.getResource("/classes/ntusd-negative.txt").getFile());
-        File positiveWordFile = new File(WordCountStream.class.getResource("/classes/ntusd-positive.txt").getFile());
+        File negativeWordFile = new File(WordCountStream.class.getResource("/ntusd-negative.txt").getFile());
+        File positiveWordFile = new File(WordCountStream.class.getResource("/ntusd-positive.txt").getFile());
 
         try (FileReader fileReader = new FileReader(negativeWordFile)) {
             try (BufferedReader bufferedReader = new BufferedReader(fileReader)) {
