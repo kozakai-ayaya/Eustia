@@ -175,7 +175,7 @@ public class WordCountStream {
                     }
                 })
                 .keyBy(0)
-                //.timeWindow(Time.seconds(300))
+                .timeWindow(Time.seconds(300))
                 .sum(1)
                 .process(new ProcessFunction<Tuple2<Tuple2<Long, String>, Integer>, Tuple2<Tuple2<Long, String>, Integer>>() {
 
@@ -293,7 +293,7 @@ public class WordCountStream {
                     }
                 })
                 .keyBy(0)
-                //.timeWindow(Time.seconds(300))
+                .timeWindow(Time.seconds(300))
                 .sum(1)
                 .addSink(new RichSinkFunction<Tuple2<String, Integer>>() {
                     private TimeCheckpoint timeCheckpoint;
