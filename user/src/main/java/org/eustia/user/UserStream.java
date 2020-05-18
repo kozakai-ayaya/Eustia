@@ -38,7 +38,7 @@ public class UserStream {
         properties.setProperty("bootstrap.servers", "localhost:9092");
         properties.setProperty("zookeeper.connect", "localhost:2181");
         properties.setProperty("group.id", "UserInfo.Stream");
-        FlinkKafkaConsumer<ObjectNode> kafkaConsumer = new FlinkKafkaConsumer<>("User_Info",
+        FlinkKafkaConsumer<ObjectNode> kafkaConsumer = new FlinkKafkaConsumer<>("UserInfo",
                 new JSONKeyValueDeserializationSchema(true), properties);
         kafkaConsumer.setStartFromGroupOffsets();
         DataStream<ObjectNode> userStream= streamExecutionEnvironment.addSource(kafkaConsumer);
