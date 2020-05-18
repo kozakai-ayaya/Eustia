@@ -23,7 +23,7 @@ class User:
         self.producer = KafkaProducer(bootstrap_servers='127.0.0.1:9092')
 
     def user(self):
-        uid_number = 0
+        uid_number = 1
         while uid_number < 10000000:
             user_url = self.user_info_api_url + str(uid_number)
             try:
