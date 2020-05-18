@@ -228,7 +228,93 @@ public class AbstractDataBaseConnect<T> implements DataBaseOperation<T> {
     }
 
     @Override
-    public ArrayList<T> getSearch(ArrayList<ArrayList<Object>> result) {
+    public long sumData(SqlInfo<T> sqlInfo) throws SQLException {
+        try (Connection connection = HikariCpConnect.syncPool.getConnection()) {
+            String sql = "SELECT SUM(" + sqlInfo.getSumKey() + ") FROM " + sqlInfo.getTable();
+            PreparedStatement preparedStatement = connection.prepareStatement(sql);
+            ResultSet resultSet = preparedStatement.executeQuery();
+            
+            long result = 0;
+            while (resultSet.next()) {
+                result = resultSet.getInt(1);
+            }
+            return result;
+        }
+    }
+
+    @Override
+    public long sumWhereData(SqlInfo<T> sqlInfo) throws SQLException {
+        try (Connection connection = HikariCpConnect.syncPool.getConnection()) {
+            String sql = "SELECT SUM(" + sqlInfo.getSumKey() + ") FROM " + sqlInfo.getTable() + " WHERE " + sqlInfo.getKey() + "= ?";
+            PreparedStatement preparedStatement = connection.prepareStatement(sql);
+            preparedStatement.setObject(1, sqlInfo.getValue());
+            ResultSet resultSet = preparedStatement.executeQuery();
+            long result = 0;
+            while (resultSet.next()) {
+                result = resultSet.getInt(1);
+            }
+            return result;
+        }
+    }
+
+    @Override
+    public ArrayList<String> getTable(SqlInfo<T> sqlInfo) throws SQLException {
+        try (Connection connection = HikariCpConnect.syncPool.getConnection()) {
+            ArrayList<String> arrayList = new ArrayList<>();
+            ResultSet resultSet = connection.getMetaData().getTables(null, null, sqlInfo.getTable(), new String[] { "TABLE" });
+            while (resultSet.next()) {
+                arrayList.add(resultSet.getString("TABLE_NAME"));
+            }
+            return arrayList;
+        }
+    }
+
+    @Override
+    public long countData(SqlInfo<T> sqlInfo) throws SQLException {
+        try (Connection connection = HikariCpConnect.syncPool.getConnection()) {
+            String sql = "SELECT COUNT(" + sqlInfo.getCountKey() + ") FROM " + sqlInfo.getTable();
+            PreparedStatement preparedStatement = connection.prepareStatement(sql);
+            ResultSet resultSet = preparedStatement.executeQuery();
+            long result = 0;
+            while (resultSet.next()) {
+                result = resultSet.getInt(1);
+            }
+            return result;
+        }
+    }
+
+    @Override
+    public ArrayList<T> getSearch(ArrayList<ArrayList<Object>> result) throws SQLException {
         return null;
+    }
+
+    @Override
+    public ArrayList<ArrayList<Object>> getSearch(SqlInfo<T> sqlInfo) throws SQLException {
+        try (Connection connection = HikariCpConnect.syncPool.getConnection()) {
+            ArrayList<ArrayList<Object>> resultList = new ArrayList<>();
+            String sql = "SELECT " + sqlInfo.getKey() + " FROM " + sqlInfo.getTable() + " WHERE " + sqlInfo.getOperation();
+            PreparedStatement preparedStatement = connection.prepareStatement(sql);
+            ResultSet resultSet = preparedStatement.executeQuery(sql);
+
+            int count = resultSet.getMetaData().getColumnCount();
+            while (resultSet.next()) {
+                ArrayList<Object> arrayList = new ArrayList<>();
+                for (int i = 1; i <= count; i ++) {
+                    arrayList.add(resultSet.getObject(i));
+                }
+                resultList.add(arrayList);
+            }
+            return resultList;
+        }
+    }
+
+    public static void main(String[] args) throws SQLException {
+        AbstractDataBaseConnect<String> abstractDataBaseConnect = new AbstractDataBaseConnect<>();
+        SqlInfo<String> sqlInfo = new SqlInfo<>();
+        sqlInfo.setKey("*");
+        sqlInfo.setTable("increment20200518");
+        sqlInfo.setOperation(" time_stamp >= 1589765629800000 ORDER BY time_stamp DESC LIMIT 8");
+        ArrayList<ArrayList<Object>> a = abstractDataBaseConnect.getSearch(sqlInfo);
+        System.out.println(a);
     }
 }

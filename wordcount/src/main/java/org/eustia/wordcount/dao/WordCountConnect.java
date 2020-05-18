@@ -128,7 +128,7 @@ public class WordCountConnect extends AbstractDataBaseConnect<WordCountInfo> imp
     }
 
     @Override
-    public ArrayList<WordCountInfo> getSearch(ArrayList<ArrayList<Object>> result) {
+    public ArrayList<WordCountInfo> getSearch(ArrayList<ArrayList<Object>> result) throws SQLException {
         ArrayList<WordCountInfo> arrayList = new ArrayList<>();
         for (ArrayList<Object> o : result) {
             WordCountInfo wordCountInfo = new WordCountInfo();
@@ -138,5 +138,10 @@ public class WordCountConnect extends AbstractDataBaseConnect<WordCountInfo> imp
             arrayList.add(wordCountInfo);
         }
         return arrayList;
+    }
+
+    @Override
+    public ArrayList<ArrayList<Object>> getSearch(SqlInfo<WordCountInfo> sqlInfo) throws SQLException {
+        return null;
     }
 }

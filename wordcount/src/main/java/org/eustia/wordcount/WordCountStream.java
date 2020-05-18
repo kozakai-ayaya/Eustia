@@ -154,7 +154,7 @@ public class WordCountStream {
                 JsonNode replies = value.get("replies");
                 for (JsonNode repliesInfo : replies) {
                     JsonNode repliesMessage = repliesInfo.get("message");
-                    long times = (Long.parseLong(repliesInfo.get("time").toString()) / (24 * 60 * 60)) * (24 * 60 * 60 * 1000);
+                    long times = (Long.parseLong(repliesInfo.get("time").toString()) / (5 * 60)) * (5 * 60 * 1000);
                     Result parse = NlpAnalysis.parse(repliesMessage.toString().replaceAll("[\\pP\\pS\\pZ]", ""));
 
                     for (Term words : parse) {
@@ -222,7 +222,8 @@ public class WordCountStream {
                         wordCountConnect.insertDuplicateUpdateData(sqlInfo);
                     }
                 });
-        
+
+        // 情绪统计
         wordStream.process(new ProcessFunction<ObjectNode, String>() {
 
             @Override
@@ -248,7 +249,7 @@ public class WordCountStream {
                                 continue;
                             }
 
-                            Result parse = NlpAnalysis.parse(messageInfo.getValue().toString().replaceAll("[\\pP\\pS\\pZ]", ""));
+                            Result parse = NlpAnalysis.parse(messageInfo.getValue().toString().replaceAll("[\\pP\\pS\\pZ]", "").replaceAll("[a-zA-Z]",""));
 
                             for (Term words : parse) {
                                 String word = words.toString().split("/")[0];
@@ -263,8 +264,8 @@ public class WordCountStream {
                 JsonNode replies = value.get("replies");
                 for (JsonNode repliesInfo : replies) {
                     JsonNode repliesMessage = repliesInfo.get("message");
-                    long times = (Long.parseLong(repliesInfo.get("time").toString()) / (24 * 60 * 60)) * (24 * 60 * 60 * 1000);
-                    Result parse = NlpAnalysis.parse(repliesMessage.toString().replaceAll("[\\pP\\pS\\pZ]", ""));
+                    long times = (Long.parseLong(repliesInfo.get("time").toString()) / (5 * 60)) * (5 * 60 * 1000);
+                    Result parse = NlpAnalysis.parse(repliesMessage.toString().replaceAll("[\\pP\\pS\\pZ]", "").replaceAll("[a-zA-Z]",""));
 
                     for (Term words : parse) {
                         String word = words.toString().split("/")[0];

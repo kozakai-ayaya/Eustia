@@ -47,7 +47,6 @@ public class EmotionalAnalysisConnect extends AbstractDataBaseConnect<EmotionalA
                          "PRIMARY KEY (times_stamp, av, emotional), " +
                          "KEY times_stamp (times_stamp), " +
                          "KEY av (av), " +
-                         "KEY emotional (emotional), " +
                          "KEY av_2 (av, emotional)) ENGINE=InnoDB");
         super.createTable(sqlInfo);
     }
@@ -108,7 +107,12 @@ public class EmotionalAnalysisConnect extends AbstractDataBaseConnect<EmotionalA
     }
 
     @Override
-    public ArrayList<EmotionalAnalysisInfo> getSearch(ArrayList<ArrayList<Object>> result) {
+    public ArrayList<EmotionalAnalysisInfo> getSearch(ArrayList<ArrayList<Object>> result) throws SQLException {
         return super.getSearch(result);
+    }
+
+    @Override
+    public ArrayList<ArrayList<Object>> getSearch(SqlInfo<EmotionalAnalysisInfo> sqlInfo) throws SQLException {
+        return null;
     }
 }

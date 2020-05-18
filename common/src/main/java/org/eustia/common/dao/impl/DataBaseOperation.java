@@ -11,6 +11,7 @@ package org.eustia.common.dao.impl;
 
 import org.eustia.common.model.SqlInfo;
 
+import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
 
@@ -45,5 +46,15 @@ public interface DataBaseOperation<T> {
 
     void deleteData(SqlInfo<T> sqlInfo) throws SQLException;
 
-    ArrayList<T> getSearch(ArrayList<ArrayList<Object>> result);
+    long sumData(SqlInfo<T> sqlInfo) throws SQLException;
+
+    long sumWhereData(SqlInfo<T> sqlInfo) throws SQLException;
+
+    long countData(SqlInfo<T> sqlInfo) throws SQLException;
+
+    ArrayList<String> getTable(SqlInfo<T> sqlInfo) throws SQLException;
+
+    ArrayList<T> getSearch(ArrayList<ArrayList<Object>> result) throws SQLException;
+
+    ArrayList<ArrayList<Object>> getSearch(SqlInfo<T> sqlInfo) throws SQLException;
 }

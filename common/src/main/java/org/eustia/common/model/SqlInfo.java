@@ -30,6 +30,8 @@ public class SqlInfo<T> {
     private HashMap<String, Object> updateMap;
     private String updateKey;
     private ArrayList<ArrayList<Object>> manyDataList;
+    private String sumKey;
+    private String countKey;
 
     public SqlInfo() {
         this.table = null;
@@ -94,6 +96,22 @@ public class SqlInfo<T> {
 
     public HashMap<String, Object> getUpdateMap() {
         return updateMap;
+    }
+
+    public String getSumKey() {
+        return sumKey;
+    }
+
+    public String getCountKey() {
+        return countKey;
+    }
+
+    public void setCountKey(String countKey) {
+        this.countKey = countKey;
+    }
+
+    public void setSumKey(String sumKey) {
+        this.sumKey = sumKey;
     }
 
     public void setList(ArrayList<Object> list) {

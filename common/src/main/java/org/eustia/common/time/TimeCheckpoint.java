@@ -21,6 +21,8 @@ import java.text.SimpleDateFormat;
  */
 
 public class TimeCheckpoint {
+    private final static int HOUR = 1000 * 60 * 60;
+    private final static int DAY = 1000 * 60 * 60 * 24;
     private int flag = 0;
     private Timestamp timestamp;
 
@@ -30,11 +32,10 @@ public class TimeCheckpoint {
 
     public boolean isHour() {
         Timestamp nowTime = new Timestamp(System.currentTimeMillis());
-        int hour = 1000 * 60 * 60;
 
         if (this.timestamp.equals(new Timestamp(0))) {
             return true;
-        } else if (nowTime.getTime() - this.timestamp.getTime() >= hour) {
+        } else if (nowTime.getTime() - this.timestamp.getTime() >= HOUR) {
             this.timestamp = nowTime;
             this.flag ++;
             return true;
@@ -46,14 +47,30 @@ public class TimeCheckpoint {
     public boolean isDay() {
         Timestamp nowTime = new Timestamp(System.currentTimeMillis());
 
-        int day = 1000 * 60 * 60 * 24;
-        if (nowTime.getTime() - this.timestamp.getTime() >= day) {
+        if (nowTime.getTime() - this.timestamp.getTime() >= DAY) {
             timestamp = nowTime;
             this.flag = 0;
             return true;
         } else {
             return false;
         }
+    }
+
+    public boolean isSecondDay() {
+        Timestamp nowTime = new Timestamp(System.currentTimeMillis());
+        SimpleDateFormat simpleDateFormat = new SimpleDateFormat("yyyyMMdd");
+
+        if (!simpleDateFormat.format(this.timestamp).equals(simpleDateFormat.format(nowTime))) {
+            this.timestamp = nowTime;
+            return true;
+        } else {
+            return false;
+        }
+    }
+
+    public String getLastDayTimeFormat() {
+        SimpleDateFormat simpleDateFormat = new SimpleDateFormat("yyyyMMdd");
+        return simpleDateFormat.format( new Timestamp(System.currentTimeMillis() - (24 * 60 * 60 * 1000)));
     }
 
     public String getTimeFormat() {
