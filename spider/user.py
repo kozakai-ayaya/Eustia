@@ -33,14 +33,14 @@ class User:
                 time.sleep(random.randint(60, 70))
                 get_user_info = json.loads(requests.get(user_url, timeout=(10, 27)).text)
 
-            if get_user_info["code"] == -404:
+            if get_user_info["code"] != 0:
                 continue
             crc32 = binascii.crc32(str(uid_number).encode("utf-8"))
             get_user_info["crc32"] = crc32
             user_json = json.dumps(get_user_info, ensure_ascii=False)
             print(user_json)
             uid_number += 1
-            self.producer.send('UserInfo', bytes(user_json, "UTF-8"))
+            self.producer.send('user_info', bytes(user_json, "UTF-8"))
 
 
 if __name__ == "__main__":
