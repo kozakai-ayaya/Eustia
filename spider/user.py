@@ -40,7 +40,7 @@ class User:
             user_json = json.dumps(get_user_info, ensure_ascii=False)
             print(user_json)
             uid_number += 1
-            self.producer.send('User_Info', bytes(user_json, "UTF-8"))
+            self.producer.send('UserInfo', bytes(user_json, "UTF-8"))
 
 
 if __name__ == "__main__":
