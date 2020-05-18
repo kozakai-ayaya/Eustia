@@ -29,7 +29,6 @@ class BiliSpider:
 
     def star(self):
         av_number = 1
-        self.user()
 
         while av_number <= 10000000:
             video_url = self.video_url + str(av_number)

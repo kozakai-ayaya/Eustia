@@ -24,7 +24,7 @@ class User:
 
     def user(self):
         uid_number = 0
-        while uid_number < 1000000:
+        while uid_number < 10000000:
             user_url = self.user_info_api_url + str(uid_number)
             try:
                 get_user_info = json.loads(requests.get(user_url, timeout=(10, 27)).text)
