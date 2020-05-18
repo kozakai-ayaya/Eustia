@@ -34,9 +34,11 @@ public class IncrementData {
 
     public IncrementData() throws SQLException {
         try {
-            insertSumData();
-            increment();
-            TimeUnit.MINUTES.sleep(5);
+            while (true) {
+                insertSumData();
+                increment();
+                TimeUnit.MINUTES.sleep(5);
+            }
         } catch (InterruptedException throwables) {
             throwables.printStackTrace();
         }
