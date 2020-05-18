@@ -44,14 +44,18 @@ public class UserBasicDataMongodbConnect extends AbstractMongodbConnect<UserBasi
 
     @Override
     public void insertData(MongodbSqlInfo<UserBasicInfo, Object> mongodbSqlInfo) throws MongoException {
-        mongodbSqlInfo.setDatabase("UserInfo");
-        mongodbSqlInfo.setCollectionName("BasicData");
-        Hashtable<String, Object> hashtable = new Hashtable<>();
-        JsonNode data = mongodbSqlInfo.getModel().getData().get("value");
-        hashtable.put("_id", data.get("data").get("card").get("mid").toString());
-        hashtable.put("data", data.toString());
-        mongodbSqlInfo.setFile(hashtable);
-        super.insertData(mongodbSqlInfo);
+        try {
+            mongodbSqlInfo.setDatabase("UserInfo");
+            mongodbSqlInfo.setCollectionName("BasicData");
+            Hashtable<String, Object> hashtable = new Hashtable<>();
+            JsonNode data = mongodbSqlInfo.getModel().getData().get("value");
+            hashtable.put("_id", data.get("data").get("card").get("mid").toString());
+            hashtable.put("data", data.toString());
+            mongodbSqlInfo.setFile(hashtable);
+            super.insertData(mongodbSqlInfo);
+        } catch (Exception x) {
+            System.out.println(x);
+        }
     }
 
     @Override
