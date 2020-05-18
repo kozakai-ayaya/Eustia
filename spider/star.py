@@ -26,11 +26,10 @@ class BiliSpider:
         self.video_tag_info_api_url = "https://api.bilibili.com/x/tag/archive/tags?aid="
         self.video_replies_api_url = "http://api.bilibili.com/x/v2/reply?jsonp=jsonp&;pn=1&type=1&oid="
         self.video_bullet_screen_api_url = "http://comment.bilibili.com/"
-        self.user_info_api_url = "https://api.bilibili.com/x/web-interface/card?mid="
 
     def star(self):
         av_number = 1
-        #self.user()
+        self.user()
 
         while av_number <= 10000000:
             video_url = self.video_url + str(av_number)
@@ -56,24 +55,6 @@ class BiliSpider:
                 self.bangumi(av_number)
 
             av_number += 1
-
-    def user(self):
-        uid_number = 3102256
-        while uid_number < 4000000:
-            user_url = self.user_info_api_url + str(uid_number)
-            try:
-                get_user_info = json.loads(requests.get(user_url, timeout=(10, 27)).text)
-            except Exception as e:
-                print(e)
-                time.sleep(random.randint(60, 70))
-                get_user_info = json.loads(requests.get(user_url, timeout=(10, 27)).text)
-
-            crc32 = binascii.crc32(str(uid_number).encode("utf-8"))
-            get_user_info["crc32"] = crc32
-            user_json = json.dumps(get_user_info, ensure_ascii=False)
-            print(user_json)
-            uid_number += 1
-            self.producer.send('User_Info', bytes(user_json, "UTF-8"))
 
     def bangumi(self, av_number):
         bangumi_base_info_api_url = self.video_base_info_api_url + str(av_number) + "&jsonp=jsonp"
