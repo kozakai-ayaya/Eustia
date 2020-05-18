@@ -48,7 +48,6 @@ public class UserBasicDataMongodbConnect extends AbstractMongodbConnect<UserBasi
         mongodbSqlInfo.setCollectionName("BasicData");
         Hashtable<String, Object> hashtable = new Hashtable<>();
         JsonNode data = mongodbSqlInfo.getModel().getData().get("value");
-        JsonNode a = data.get("data").get("card").get("mid");
         hashtable.put("_id", data.get("data").get("card").get("mid").toString());
         hashtable.put("data", data.toString());
         mongodbSqlInfo.setFile(hashtable);
