@@ -39,6 +39,9 @@
                         </goals>
                         <configuration>
                             <transformers>
+                                <transformer implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
+                                    <mainClass>org.eustia.increment.Star</mainClass>
+                                </transformer>
                                 <transformer implementation="org.apache.maven.plugins.shade.resource.AppendingTransformer">
                                     <resource>reference.conf</resource>
                                 </transformer>
@@ -59,4 +62,5 @@
             </plugin>
         </plugins>
     </build>
+
 </project>
