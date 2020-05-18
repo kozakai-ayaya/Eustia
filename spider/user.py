@@ -33,6 +33,8 @@ class User:
                 time.sleep(random.randint(60, 70))
                 get_user_info = json.loads(requests.get(user_url, timeout=(10, 27)).text)
 
+            if get_user_info["code"] == -404:
+                continue
             crc32 = binascii.crc32(str(uid_number).encode("utf-8"))
             get_user_info["crc32"] = crc32
             user_json = json.dumps(get_user_info, ensure_ascii=False)
