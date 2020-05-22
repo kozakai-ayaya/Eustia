@@ -113,7 +113,7 @@ public class WordCountStream {
                     basicDataMongodbConnect.updateData(mongodbSqlInfo);
                 }
             }
-        }).setParallelism(20);
+        }).setParallelism(50);
 
         // 热词统计
         wordStream.process(new ProcessFunction<ObjectNode, Tuple2<Long, String>>() {
@@ -336,7 +336,7 @@ public class WordCountStream {
                         sqlInfo.setModel(emotionalAnalysisInfo);
                         emotionalAnalysisConnect.insertDuplicateUpdateData(sqlInfo);
                     }
-                }).setParallelism(20);
+                }).setParallelism(50);
 
         try {
             streamExecutionEnvironment.execute("WordCount");
