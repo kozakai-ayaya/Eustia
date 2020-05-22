@@ -102,19 +102,19 @@ public class WordCountStream {
 
             @Override
             public void invoke(ObjectNode value, Context context) throws Exception {
-                BasicDataInfo basicDataInfo = new BasicDataInfo();
-                MongodbSqlInfo<BasicDataInfo, Object> mongodbSqlInfo = new MongodbSqlInfo<>();
-                basicDataInfo.setDate(value);
-                mongodbSqlInfo.setModel(basicDataInfo);
                 try {
-                    basicDataMongodbConnect.insertData(mongodbSqlInfo);
-                } catch (MongoException e) {
-                    System.out.println(e);
+                    BasicDataInfo basicDataInfo = new BasicDataInfo();
+                    MongodbSqlInfo<BasicDataInfo, Object> mongodbSqlInfo = new MongodbSqlInfo<>();
+                    basicDataInfo.setDate(value);
+                    mongodbSqlInfo.setModel(basicDataInfo);
                     try {
+                        basicDataMongodbConnect.insertData(mongodbSqlInfo);
+                    } catch (MongoException e) {
+                        System.out.println(e);
                         basicDataMongodbConnect.updateData(mongodbSqlInfo);
-                    } catch (MongoException err) {
-                        System.out.println(err);
                     }
+                } catch (MongoException err) {
+                    System.out.println(err);
                 }
             }
         }).setParallelism(50);
