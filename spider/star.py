@@ -150,7 +150,7 @@ class BiliSpider:
             video_info["bullet_screen"] = bullet_screen_info.get("bullet")
             video_info["replies"] = self.video_replies_info(av_number)
             info_json = json.dumps(video_info, ensure_ascii=False)
-            print(info_json)
+            print(type(info_json))
             self.producer.send('Word_Count', bytes(info_json, "UTF-8"))
         except Exception as e:
             print(e)

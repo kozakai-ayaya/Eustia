@@ -113,7 +113,7 @@ public class WordCountStream {
                     basicDataMongodbConnect.updateData(mongodbSqlInfo);
                 }
             }
-        });
+        }).setParallelism(20);
 
         // 热词统计
         wordStream.process(new ProcessFunction<ObjectNode, Tuple2<Long, String>>() {
@@ -123,6 +123,7 @@ public class WordCountStream {
                 JsonNode value = jsonNodes.get("value");
                 JsonNode bulletScreen = value.get("bullet_screen");
 
+                // 弹幕
                 for (JsonNode bulletInfo : bulletScreen) {
                     JsonNode bullet = bulletInfo.get("bullet");
                     Iterator<Map.Entry<String, JsonNode>> field = bullet.fields();
@@ -132,11 +133,17 @@ public class WordCountStream {
                         Iterator<Map.Entry<String, JsonNode>> messageField = message.getValue().fields();
                         while (messageField.hasNext()) {
                             Map.Entry<String, JsonNode> messageInfo = messageField.next();
+
+                            // 时间戳求余放大
                             long times = (Long.parseLong(messageInfo.getKey()) / (5 * 60)) * (5 * 60 * 1000);
                             String text = messageInfo.getValue().toString();
+
+                            // 特殊弹幕过滤
                             if (text.charAt(1) == '[' && text.charAt(text.length() - 2) == ']') {
                                 continue;
                             }
+
+                            // 过滤特殊字符
                             Result parse = NlpAnalysis.parse(messageInfo.getValue().toString().replaceAll("[\\pP\\pS\\pZ]", ""));
                             for (Term words : parse) {
                                 String word = words.toString().split("/")[0];
@@ -221,7 +228,7 @@ public class WordCountStream {
                         sqlInfo.setModel(wordCountInfo);
                         wordCountConnect.insertDuplicateUpdateData(sqlInfo);
                     }
-                });
+                }).setParallelism(50);
 
         // 情绪统计
         wordStream.process(new ProcessFunction<ObjectNode, String>() {
@@ -329,7 +336,7 @@ public class WordCountStream {
                         sqlInfo.setModel(emotionalAnalysisInfo);
                         emotionalAnalysisConnect.insertDuplicateUpdateData(sqlInfo);
                     }
-                });
+                }).setParallelism(20);
 
         try {
             streamExecutionEnvironment.execute("WordCount");
