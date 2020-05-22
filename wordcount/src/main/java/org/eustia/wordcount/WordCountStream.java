@@ -110,7 +110,11 @@ public class WordCountStream {
                     basicDataMongodbConnect.insertData(mongodbSqlInfo);
                 } catch (MongoException e) {
                     System.out.println(e);
-                    basicDataMongodbConnect.updateData(mongodbSqlInfo);
+                    try {
+                        basicDataMongodbConnect.updateData(mongodbSqlInfo);
+                    } catch (MongoException err) {
+                        System.out.println(err);
+                    }
                 }
             }
         }).setParallelism(50);
