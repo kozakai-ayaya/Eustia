@@ -317,4 +317,5 @@ public class AbstractDataBaseConnect<T> implements DataBaseOperation<T> {
         ArrayList<ArrayList<Object>> a = abstractDataBaseConnect.getSearch(sqlInfo);
         System.out.println(a);
     }
+
 }
