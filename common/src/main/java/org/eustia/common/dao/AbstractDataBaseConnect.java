@@ -308,14 +308,4 @@ public class AbstractDataBaseConnect<T> implements DataBaseOperation<T> {
         }
     }
 
-    public static void main(String[] args) throws SQLException {
-        AbstractDataBaseConnect<String> abstractDataBaseConnect = new AbstractDataBaseConnect<>();
-        SqlInfo<String> sqlInfo = new SqlInfo<>();
-        sqlInfo.setKey("*");
-        sqlInfo.setTable("increment20200518");
-        sqlInfo.setOperation(" time_stamp >= 1589765629800000 ORDER BY time_stamp DESC LIMIT 8");
-        ArrayList<ArrayList<Object>> a = abstractDataBaseConnect.getSearch(sqlInfo);
-        System.out.println(a);
-    }
-
 }
