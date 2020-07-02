@@ -93,31 +93,31 @@ public class WordCountStream {
         DataStream<ObjectNode> wordStream = streamExecutionEnvironment.addSource(kafkaConsumer);
 
         // 原数据提交到MongoDB
-        wordStream.addSink(new RichSinkFunction<ObjectNode>() {
-            BasicDataMongodbConnect basicDataMongodbConnect;
-            @Override
-            public void open(Configuration parameters) throws Exception {
-                basicDataMongodbConnect = new BasicDataMongodbConnect();
-            }
-
-            @Override
-            public void invoke(ObjectNode value, Context context) throws Exception {
-                try {
-                    BasicDataInfo basicDataInfo = new BasicDataInfo();
-                    MongodbSqlInfo<BasicDataInfo, Object> mongodbSqlInfo = new MongodbSqlInfo<>();
-                    basicDataInfo.setDate(value);
-                    mongodbSqlInfo.setModel(basicDataInfo);
-                    try {
-                        basicDataMongodbConnect.insertData(mongodbSqlInfo);
-                    } catch (MongoException e) {
-                        System.out.println(e);
-                        basicDataMongodbConnect.updateData(mongodbSqlInfo);
-                    }
-                } catch (MongoException err) {
-                    System.out.println(err);
-                }
-            }
-        });
+//        wordStream.addSink(new RichSinkFunction<ObjectNode>() {
+//            BasicDataMongodbConnect basicDataMongodbConnect;
+//            @Override
+//            public void open(Configuration parameters) throws Exception {
+//                basicDataMongodbConnect = new BasicDataMongodbConnect();
+//            }
+//
+//            @Override
+//            public void invoke(ObjectNode value, Context context) throws Exception {
+//                try {
+//                    BasicDataInfo basicDataInfo = new BasicDataInfo();
+//                    MongodbSqlInfo<BasicDataInfo, Object> mongodbSqlInfo = new MongodbSqlInfo<>();
+//                    basicDataInfo.setDate(value);
+//                    mongodbSqlInfo.setModel(basicDataInfo);
+//                    try {
+//                        basicDataMongodbConnect.insertData(mongodbSqlInfo);
+//                    } catch (MongoException e) {
+//                        System.out.println(e);
+//                        basicDataMongodbConnect.updateData(mongodbSqlInfo);
+//                    }
+//                } catch (MongoException err) {
+//                    System.out.println(err);
+//                }
+//            }
+//        });
 
         // 热词统计
         wordStream.process(new ProcessFunction<ObjectNode, Tuple2<Long, String>>() {
