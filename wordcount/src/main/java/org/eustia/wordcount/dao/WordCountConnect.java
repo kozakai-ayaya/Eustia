@@ -92,6 +92,7 @@ public class WordCountConnect extends AbstractDataBaseConnect<WordCountInfo> imp
 
     @Override
     public void insertManyDuplicateUpdateData(SqlInfo<WordCountInfo> sqlInfo) throws SQLException {
+        sqlInfo.setTable("hot_word" + sqlInfo.getTable());
         sqlInfo.setKey("(times_stamp, word, count)");
         sqlInfo.setValue("(?, ?, ?)");
         sqlInfo.setUpdateKey("count");
@@ -99,7 +100,7 @@ public class WordCountConnect extends AbstractDataBaseConnect<WordCountInfo> imp
 
         ArrayList<ArrayList<Object>> newDataList = new ArrayList<>();
         for (ArrayList<Object> arrayList : sqlInfo.getManyDataList()) {
-            arrayList.add(arrayList.size());
+            arrayList.add(arrayList.get(arrayList.size() - 1));
             newDataList.add(arrayList);
         }
         sqlInfo.setManyDataList(newDataList);

@@ -77,7 +77,6 @@ public class SqlInfo<T> {
         this.manyDataList = manyDataList;
     }
 
-
     public void setUpdateKey(String updateKey) {
         this.updateKey = updateKey;
     }
