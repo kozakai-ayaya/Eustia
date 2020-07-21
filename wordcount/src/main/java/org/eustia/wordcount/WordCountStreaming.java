@@ -14,7 +14,6 @@ import org.ansj.domain.Result;
 import org.ansj.domain.Term;
 import org.ansj.splitWord.analysis.NlpAnalysis;
 import org.apache.flink.api.common.functions.FlatMapFunction;
-import org.apache.flink.api.java.tuple.Tuple2;
 import org.apache.flink.configuration.Configuration;
 import org.apache.flink.shaded.jackson2.com.fasterxml.jackson.databind.JsonNode;
 import org.apache.flink.shaded.jackson2.com.fasterxml.jackson.databind.node.ObjectNode;
@@ -27,12 +26,16 @@ import org.apache.flink.streaming.api.windowing.windows.GlobalWindow;
 import org.apache.flink.streaming.connectors.kafka.FlinkKafkaConsumer;
 import org.apache.flink.streaming.util.serialization.JSONKeyValueDeserializationSchema;
 import org.apache.flink.util.Collector;
+import org.eustia.common.model.EmotionalWordModel;
 import org.eustia.common.model.MongodbSqlInfo;
 import org.eustia.common.model.SqlInfo;
+import org.eustia.common.model.WordCountModel;
 import org.eustia.common.time.TimeCheckpoint;
 import org.eustia.wordcount.dao.BasicDataMongodbConnect;
+import org.eustia.wordcount.dao.EmotionalAnalysisConnect;
 import org.eustia.wordcount.dao.WordCountConnect;
 import org.eustia.wordcount.model.BasicDataInfo;
+import org.eustia.wordcount.model.EmotionalAnalysisInfo;
 import org.eustia.wordcount.model.WordCountInfo;
 
 import java.io.BufferedReader;
@@ -53,10 +56,12 @@ import java.util.*;
 public class WordCountStreaming {
     static TreeSet<String> negativeWord = new TreeSet<>();
     static TreeSet<String> positiveWord = new TreeSet<>();
+    static TreeSet<String> blackListWord = new TreeSet<>();
 
     static {
         InputStream negativeWordFile = Thread.currentThread().getContextClassLoader().getResourceAsStream("ntusd-negative.txt");
         InputStream positiveWordFile = Thread.currentThread().getContextClassLoader().getResourceAsStream("ntusd-positive.txt");
+        InputStream blackListWordFile = Thread.currentThread().getContextClassLoader().getResourceAsStream("blacklist.txt");
 
         if (negativeWordFile != null) {
             try (BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(negativeWordFile, StandardCharsets.UTF_8))) {
@@ -74,6 +79,17 @@ public class WordCountStreaming {
                 String word;
                 while ((word = bufferedReader.readLine()) != null) {
                     positiveWord.add(word);
+                }
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+
+        if (blackListWordFile != null ) {
+            try (BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(blackListWordFile, StandardCharsets.UTF_8))) {
+                String word;
+                while ((word = bufferedReader.readLine()) != null) {
+                    blackListWord.add(word);
                 }
             } catch (IOException e) {
                 e.printStackTrace();
@@ -120,11 +136,12 @@ public class WordCountStreaming {
             }
         });
 
-        wordStream.flatMap(new FlatMapFunction<ObjectNode, Tuple2<String, Integer>>() {
+        DataStream<WordCountModel> cleanData = wordStream.flatMap(new FlatMapFunction<ObjectNode, WordCountModel>() {
             @Override
-            public void flatMap(ObjectNode jsonNodes, Collector<Tuple2<String, Integer>> collector) throws Exception {
+            public void flatMap(ObjectNode jsonNodes, Collector<WordCountModel> collector) throws Exception {
                 JsonNode value = jsonNodes.get("value");
                 JsonNode bulletScreen = value.get("bullet_screen");
+                String av = value.get("av").toString().replaceAll("\"", "");
 
                 // 弹幕
                 for (JsonNode bulletInfo : bulletScreen) {
@@ -153,9 +170,12 @@ public class WordCountStreaming {
                                 if (word.length() <= 1) {
                                     continue;
                                 }
-                                String keyInfo = times + "," + word;
-                                Tuple2<String, Integer> wordTuple = new Tuple2<>(keyInfo, 1);
-                                collector.collect(wordTuple);
+                                WordCountModel model = new WordCountModel();
+                                model.setWord(word);
+                                model.setTimestamp(times);
+                                model.setCount(1);
+                                model.setAv(av);
+                                collector.collect(model);
                             }
                         }
                     }
@@ -170,81 +190,163 @@ public class WordCountStreaming {
 
                     for (Term words : parse) {
                         String word = words.toString().split("/")[0];
-                        if (word.length() <= 1) {
+                        if (word.length() <= 1 || blackListWord.contains(word)) {
                             continue;
                         }
-                        String keyInfo = times + "," + word;
-                        Tuple2<String, Integer> text = new Tuple2<>(keyInfo, 1);
-                        collector.collect(text);
+                        WordCountModel model = new WordCountModel();
+                        model.setWord(word);
+                        model.setTimestamp(times);
+                        model.setCount(1);
+                        model.setAv(av);
+                        collector.collect(model);
                     }
                 }
             }
-        })
-                .keyBy(0)
+        });
+
+        cleanData
+                .keyBy("key")
                 .timeWindow(Time.seconds(300))
-                .sum(1)
+                .sum("count")
                 .countWindowAll(200)
-                .process(new ProcessAllWindowFunction<Tuple2<String, Integer>, ArrayList<ArrayList<Object>>, GlobalWindow>() {
+                .process(new ProcessAllWindowFunction<WordCountModel, ArrayList<WordCountModel>, GlobalWindow>() {
                     @Override
-                    public void process(Context context, Iterable<Tuple2<String, Integer>> elements, Collector<ArrayList<ArrayList<Object>>> out) throws Exception {
+                    public void process(Context context, Iterable<WordCountModel> elements, Collector<ArrayList<WordCountModel>> out) throws Exception {
 
-                        ArrayList<ArrayList<Object>> arrayList = new ArrayList<>();
+                        ArrayList<WordCountModel> arrayList = new ArrayList<>();
 
-                        for (Tuple2<String, Integer> x : elements) {
-                            String key = x.getField(0);
+                        for (WordCountModel x : elements) {
+                            int count  = x.getCount();
 
-                            int count  = Integer.parseInt(x.getField(1));
-
-
-                            if (count < needCount) {
-                                continue;
+                            if (count > needCount) {
+                                arrayList.add(x);
                             }
-
-                            ArrayList<Object> listInfo = new ArrayList<>();
-                            System.out.println(x);
-                            listInfo.add(Long.parseLong(key.split(",")[0]));
-                            listInfo.add(key.split(",")[1]);
-                            listInfo.add(count);
-                            arrayList.add(listInfo);
                         }
-
                         out.collect(arrayList);
                     }
                 })
-                .addSink(new RichSinkFunction<ArrayList<ArrayList<Object>>>() {
+                .addSink(new RichSinkFunction<ArrayList<WordCountModel>>() {
                     private TimeCheckpoint timeCheckpoint;
+                    private WordCountConnect wordCountConnect;
+                    private SqlInfo<WordCountInfo> sqlInfo;
 
                     @Override
                     public void open(Configuration parameters) throws Exception {
+                        this.timeCheckpoint = new TimeCheckpoint();
+                        this.wordCountConnect = new WordCountConnect();
+                        this.sqlInfo = new SqlInfo<>();
                         super.open(parameters);
                     }
 
                     @Override
-                    public void invoke(ArrayList<ArrayList<Object>> value, Context context) throws Exception {
-                        WordCountConnect wordCountConnect = new WordCountConnect();
-                        WordCountInfo wordCountInfo = new WordCountInfo();
-                        SqlInfo<WordCountInfo> sqlInfo = new SqlInfo<>();
+                    public void invoke(ArrayList<WordCountModel> value, Context context) throws Exception {
+                        ArrayList<ArrayList<Object>> arrayLists = new ArrayList<>();
 
-                        sqlInfo.setManyDataList(value);
+                        for (WordCountModel wordCountModel : value) {
+                            ArrayList<Object> a = new ArrayList<>();
+                            a.add(wordCountModel.getTimestamp());
+                            a.add(wordCountModel.getWord());
+                            a.add(wordCountModel.getCount());
+                            arrayLists.add(a);
+                        }
+
+                        sqlInfo.setManyDataList(arrayLists);
 
                         if (this.timeCheckpoint.isDay()) {
                             sqlInfo.setTable(this.timeCheckpoint.getTimeFormat());
                             try {
-                                wordCountConnect.createTable(sqlInfo);
+                                this.wordCountConnect.createTable(sqlInfo);
                             } catch (Exception e) {
                                 System.out.println(e);
                             }
                         }
 
                         sqlInfo.setTable(this.timeCheckpoint.getTimeFormat());
-                        sqlInfo.setModel(wordCountInfo);
-                        wordCountConnect.insertManyDuplicateUpdateData(sqlInfo);
+                        this.wordCountConnect.insertManyDuplicateUpdateData(sqlInfo);
                     }
                 });
-        
-//        wordStream.flatMap(new FlatMapFunction<ObjectNode, Object>() {
-//        })
-        
+
+        // 情绪统计
+        cleanData.flatMap(new FlatMapFunction<WordCountModel, EmotionalWordModel>() {
+
+            private String emotionalCheckpoint(String word) {
+                if (negativeWord.contains(word)) {
+                    return "negative";
+                } else if (positiveWord.contains(word)) {
+                    return "positive";
+                } else {
+                    return "unknown";
+                }
+            }
+
+            @Override
+            public void flatMap(WordCountModel valueModel, Collector<EmotionalWordModel> collector) throws Exception {
+                EmotionalWordModel emotionalWordModel = new EmotionalWordModel();
+
+                emotionalWordModel.setKey(valueModel.getKey());
+                emotionalWordModel.setAv(valueModel.getAv());
+                emotionalWordModel.setEmotionalWord(this.emotionalCheckpoint(valueModel.getWord()));
+                emotionalWordModel.setTimestamp(valueModel.getTimestamp());
+                emotionalWordModel.setCount(valueModel.getCount());
+                collector.collect(emotionalWordModel);
+            }
+        })
+                .keyBy("key")
+                .timeWindow(Time.seconds(300))
+                .sum("count")
+                .countWindowAll(200)
+                .process(new ProcessAllWindowFunction<EmotionalWordModel, ArrayList<EmotionalWordModel>, GlobalWindow>() {
+                    @Override
+                    public void process(Context context, Iterable<EmotionalWordModel> iterable, Collector<ArrayList<EmotionalWordModel>> collector) throws Exception {
+                        ArrayList<EmotionalWordModel> arrayList = new ArrayList<>();
+                        for (EmotionalWordModel e : iterable) {
+                            arrayList.add(e);
+                        }
+                        collector.collect(arrayList);
+                     }
+                })
+                .addSink(new RichSinkFunction<ArrayList<EmotionalWordModel>>() {
+                    private TimeCheckpoint timeCheckpoint;
+                    private EmotionalAnalysisConnect emotionalAnalysisConnect;
+                    private SqlInfo<EmotionalAnalysisInfo> sqlInfo;
+
+                    @Override
+                    public void open(Configuration parameters) throws Exception {
+                        this.timeCheckpoint = new TimeCheckpoint();
+                        this.emotionalAnalysisConnect = new EmotionalAnalysisConnect();
+                        this.sqlInfo = new SqlInfo<>();
+                        super.open(parameters);
+                    }
+
+                    @Override
+                    public void invoke(ArrayList<EmotionalWordModel> value, Context context) throws Exception {
+                        ArrayList<ArrayList<Object>> arrayLists = new ArrayList<>();
+
+                        for (EmotionalWordModel emotionalWordModel : value) {
+                            ArrayList<Object> a = new ArrayList<>();
+                            a.add(emotionalWordModel.getTimestamp());
+                            a.add(emotionalWordModel.getAv());
+                            a.add(emotionalWordModel.getEmotionalWord());
+                            a.add(emotionalWordModel.getCount());
+                            arrayLists.add(a);
+                        }
+
+                        sqlInfo.setManyDataList(arrayLists);
+
+                        if (this.timeCheckpoint.isDay()) {
+                            sqlInfo.setTable(this.timeCheckpoint.getTimeFormat());
+                            try {
+                                emotionalAnalysisConnect.createTable(this.sqlInfo);
+                            } catch (Exception e) {
+                                System.out.println(e);
+                            }
+                        }
+
+                        sqlInfo.setTable(this.timeCheckpoint.getTimeFormat());
+                        this.emotionalAnalysisConnect.insertManyDuplicateUpdateData(sqlInfo);
+                    }
+                });
+
         try {
             streamExecutionEnvironment.execute("WordCount");
         } catch (Exception e) {

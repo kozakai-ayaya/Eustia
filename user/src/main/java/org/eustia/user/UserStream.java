@@ -66,6 +66,7 @@ public class UserStream {
             }
         });
 
+
         try {
             streamExecutionEnvironment.execute("UserStream");
         } catch (Exception e) {

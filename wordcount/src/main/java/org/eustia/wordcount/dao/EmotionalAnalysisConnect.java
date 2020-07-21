@@ -83,6 +83,19 @@ public class EmotionalAnalysisConnect extends AbstractDataBaseConnect<EmotionalA
 
     @Override
     public void insertManyDuplicateUpdateData(SqlInfo<EmotionalAnalysisInfo> sqlInfo) throws SQLException {
+        sqlInfo.setTable("emotional_word" + sqlInfo.getTable());
+        sqlInfo.setKey("(times_stamp, av, emotional, count)");
+        sqlInfo.setValue("(?, ?, ?, ?)");
+        sqlInfo.setUpdateKey("count");
+        sqlInfo.setOperation("count + ?");
+
+        ArrayList<ArrayList<Object>> newDataList = new ArrayList<>();
+        for (ArrayList<Object> arrayList : sqlInfo.getManyDataList()) {
+            arrayList.add(arrayList.get(arrayList.size() - 1));
+            newDataList.add(arrayList);
+        }
+        sqlInfo.setManyDataList(newDataList);
+
         super.insertManyDuplicateUpdateData(sqlInfo);
     }
 

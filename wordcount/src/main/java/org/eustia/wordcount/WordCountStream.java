@@ -10,7 +10,6 @@ package org.eustia.wordcount;
  */
 
 
-import com.mongodb.MongoException;
 import org.ansj.domain.Result;
 import org.ansj.domain.Term;
 import org.ansj.splitWord.analysis.NlpAnalysis;
@@ -27,19 +26,22 @@ import org.apache.flink.streaming.api.windowing.time.Time;
 import org.apache.flink.streaming.connectors.kafka.FlinkKafkaConsumer;
 import org.apache.flink.streaming.util.serialization.JSONKeyValueDeserializationSchema;
 import org.apache.flink.util.Collector;
+import org.eustia.common.model.SqlInfo;
 import org.eustia.common.time.TimeCheckpoint;
-import org.eustia.wordcount.dao.BasicDataMongodbConnect;
 import org.eustia.wordcount.dao.EmotionalAnalysisConnect;
 import org.eustia.wordcount.dao.WordCountConnect;
-import org.eustia.common.model.MongodbSqlInfo;
-import org.eustia.common.model.SqlInfo;
-import org.eustia.wordcount.model.BasicDataInfo;
 import org.eustia.wordcount.model.EmotionalAnalysisInfo;
 import org.eustia.wordcount.model.WordCountInfo;
 
-import java.io.*;
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
-import java.util.*;
+import java.util.Iterator;
+import java.util.Map;
+import java.util.Properties;
+import java.util.TreeSet;
 
 /**
  * @classname: WordCountStream
