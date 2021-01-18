@@ -9,32 +9,40 @@ package org.eustia.wordcount;
  * @date: 2020/07/03 午後 08:51
  */
 
-import com.mongodb.MongoException;
+import com.alibaba.fastjson.JSON;
+import com.alibaba.fastjson.JSONObject;
 import org.ansj.domain.Result;
 import org.ansj.domain.Term;
 import org.ansj.splitWord.analysis.NlpAnalysis;
 import org.apache.flink.api.common.functions.FlatMapFunction;
+import org.apache.flink.api.common.functions.RuntimeContext;
+import org.apache.flink.api.common.serialization.DeserializationSchema;
+import org.apache.flink.api.common.typeinfo.TypeInformation;
+import org.apache.flink.api.java.functions.KeySelector;
 import org.apache.flink.configuration.Configuration;
 import org.apache.flink.shaded.jackson2.com.fasterxml.jackson.databind.JsonNode;
-import org.apache.flink.shaded.jackson2.com.fasterxml.jackson.databind.node.ObjectNode;
+import org.apache.flink.shaded.jackson2.com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.flink.streaming.api.datastream.DataStream;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
+import org.apache.flink.streaming.api.functions.ProcessFunction;
 import org.apache.flink.streaming.api.functions.sink.RichSinkFunction;
 import org.apache.flink.streaming.api.functions.windowing.ProcessAllWindowFunction;
 import org.apache.flink.streaming.api.windowing.time.Time;
 import org.apache.flink.streaming.api.windowing.windows.GlobalWindow;
+import org.apache.flink.streaming.connectors.elasticsearch.ElasticsearchSinkFunction;
+import org.apache.flink.streaming.connectors.elasticsearch.RequestIndexer;
+import org.apache.flink.streaming.connectors.elasticsearch7.ElasticsearchSink;
 import org.apache.flink.streaming.connectors.kafka.FlinkKafkaConsumer;
-import org.apache.flink.streaming.util.serialization.JSONKeyValueDeserializationSchema;
 import org.apache.flink.util.Collector;
+import org.apache.http.HttpHost;
+import org.elasticsearch.action.index.IndexRequest;
+import org.elasticsearch.client.Requests;
 import org.eustia.common.model.EmotionalWordModel;
-import org.eustia.common.model.MongodbSqlInfo;
 import org.eustia.common.model.SqlInfo;
 import org.eustia.common.model.WordCountModel;
 import org.eustia.common.time.TimeCheckpoint;
-import org.eustia.wordcount.dao.BasicDataMongodbConnect;
 import org.eustia.wordcount.dao.EmotionalAnalysisConnect;
 import org.eustia.wordcount.dao.WordCountConnect;
-import org.eustia.wordcount.model.BasicDataInfo;
 import org.eustia.wordcount.model.EmotionalAnalysisInfo;
 import org.eustia.wordcount.model.WordCountInfo;
 
@@ -100,118 +108,144 @@ public class WordCountStreaming {
     public static void main(String[] args) {
         final int needCount = 10;
         StreamExecutionEnvironment streamExecutionEnvironment = StreamExecutionEnvironment.getExecutionEnvironment();
+
         Properties properties = new Properties();
         properties.setProperty("bootstrap.servers", "10.16.95.21:9092");
         properties.setProperty("zookeeper.connect", "10.16.95.21:2181");
         properties.setProperty("group.id", "WordCount.stream");
-        FlinkKafkaConsumer<ObjectNode> kafkaConsumer = new FlinkKafkaConsumer<>("Word_Count",
-                new JSONKeyValueDeserializationSchema(true), properties);
+
+        List<HttpHost> esHosts = new ArrayList<>();
+        esHosts.add(new HttpHost("10.16.95.21", 9200, "http"));
+
+        FlinkKafkaConsumer<String> kafkaConsumer = new FlinkKafkaConsumer<>(
+                "Word_Count",
+                new DeserializationSchema<String>() {
+                    @Override
+                    public String deserialize(byte[] bytes) {
+                        return new String(bytes);
+                    }
+
+                    @Override
+                    public boolean isEndOfStream(String s) {
+                        return false;
+                    }
+
+                    @Override
+                    public TypeInformation<String> getProducedType() {
+                        return TypeInformation.of(String.class);
+                    }
+                },
+                properties
+        );
         kafkaConsumer.setStartFromGroupOffsets();
-        DataStream<ObjectNode> wordStream = streamExecutionEnvironment.addSource(kafkaConsumer);
 
-        // 原数据提交到MongoDB
-//        wordStream.addSink(new RichSinkFunction<ObjectNode>() {
-//            BasicDataMongodbConnect basicDataMongodbConnect;
-//            @Override
-//            public void open(Configuration parameters) throws Exception {
-//                basicDataMongodbConnect = new BasicDataMongodbConnect();
-//            }
-//
-//            @Override
-//            public void invoke(ObjectNode value, Context context) throws Exception {
-//                try {
-//                    BasicDataInfo basicDataInfo = new BasicDataInfo();
-//                    MongodbSqlInfo<BasicDataInfo, Object> mongodbSqlInfo = new MongodbSqlInfo<>();
-//                    basicDataInfo.setDate(value);
-//                    mongodbSqlInfo.setModel(basicDataInfo);
-//                    try {
-//                        basicDataMongodbConnect.insertData(mongodbSqlInfo);
-//                    } catch (MongoException e) {
-//                        System.out.println(e);
-//                        basicDataMongodbConnect.updateData(mongodbSqlInfo);
-//                    }
-//                } catch (MongoException err) {
-//                    System.out.println(err);
-//                }
-//            }
-//        });
+        DataStream<String> wordStream = streamExecutionEnvironment.addSource(kafkaConsumer);
 
-        DataStream<WordCountModel> cleanData = wordStream.flatMap(new FlatMapFunction<ObjectNode, WordCountModel>() {
-            @Override
-            public void flatMap(ObjectNode jsonNodes, Collector<WordCountModel> collector) throws Exception {
-                JsonNode value = jsonNodes.get("value");
-                JsonNode bulletScreen = value.get("bullet_screen");
-                String av = value.get("av").toString().replaceAll("\"", "");
+        wordStream.addSink(new ElasticsearchSink.Builder<>(
+                esHosts,
+                new ElasticsearchSinkFunction<String>() {
+                    @Override
+                    public void process(String s, RuntimeContext runtimeContext, RequestIndexer requestIndexer) {
+                        JSONObject objectNode = JSON.parseObject(s);
+                        HashMap<String, String> json = new HashMap<>(1);
+                        json.put("data", objectNode.toString());
 
-                // 弹幕
-                for (JsonNode bulletInfo : bulletScreen) {
-                    JsonNode bullet = bulletInfo.get("bullet");
-                    Iterator<Map.Entry<String, JsonNode>> field = bullet.fields();
-
-                    while (field.hasNext()) {
-                        Map.Entry<String, JsonNode> message = field.next();
-                        Iterator<Map.Entry<String, JsonNode>> messageField = message.getValue().fields();
-                        while (messageField.hasNext()) {
-                            Map.Entry<String, JsonNode> messageInfo = messageField.next();
-
-                            // 时间戳求余放大
-                            long times = (Long.parseLong(messageInfo.getKey()) / (5 * 60)) * (5 * 60 * 1000);
-                            String text = messageInfo.getValue().toString();
-
-                            // 特殊弹幕过滤
-                            if (text.charAt(1) == '[' && text.charAt(text.length() - 2) == ']') {
-                                continue;
-                            }
-
-                            // 过滤特殊字符
-                            Result parse = NlpAnalysis.parse(messageInfo.getValue().toString().replaceAll("[\\pP\\pS\\pZ]", ""));
-                            for (Term words : parse) {
-                                String word = words.toString().split("/")[0];
-                                if (word.length() <= 1) {
-                                    continue;
-                                }
-                                WordCountModel model = new WordCountModel();
-                                model.setWord(word);
-                                model.setTimestamp(times);
-                                model.setCount(1);
-                                model.setAv(av);
-                                collector.collect(model);
-                            }
-                        }
+                        IndexRequest request = Requests.indexRequest()
+                                .index("word_count")
+                                .id(objectNode.get("av").toString())
+                                .source(json);
+                        requestIndexer.add(request);
                     }
-                }
+                }).build()
+        );
 
-                // 评论区
-                JsonNode replies = value.get("replies");
-                for (JsonNode repliesInfo : replies) {
-                    JsonNode repliesMessage = repliesInfo.get("message");
-                    long times = (Long.parseLong(repliesInfo.get("time").toString()) / (5 * 60)) * (5 * 60 * 1000);
-                    Result parse = NlpAnalysis.parse(repliesMessage.toString().replaceAll("[\\pP\\pS\\pZ]", ""));
-
-                    for (Term words : parse) {
-                        String word = words.toString().split("/")[0];
-                        if (word.length() <= 1 || blackListWord.contains(word)) {
-                            continue;
-                        }
-                        WordCountModel model = new WordCountModel();
-                        model.setWord(word);
-                        model.setTimestamp(times);
-                        model.setCount(1);
-                        model.setAv(av);
-                        collector.collect(model);
+        DataStream<WordCountModel> cleanData = wordStream
+                .process(new ProcessFunction<String, JsonNode>() {
+                    @Override
+                    public void processElement(String s, Context context, Collector<JsonNode> collector) throws Exception {
+                        ObjectMapper objectMapper = new ObjectMapper();
+                        JsonNode jsonNode = objectMapper.readTree(s);
+                        collector.collect(jsonNode);
                     }
-                }
-            }
-        });
+                })
+                .flatMap(new FlatMapFunction<JsonNode, WordCountModel>() {
+                     @Override
+                     public void flatMap(JsonNode value, Collector<WordCountModel> collector) {
+                         JsonNode bulletScreen = value.get("bullet_screen");
+                         String av = value.get("av").toString().replaceAll("\"", "");
+
+                         // 弹幕
+                         for (JsonNode bulletInfo : bulletScreen) {
+                             JsonNode bullet = bulletInfo.get("bullet");
+                             Iterator<Map.Entry<String, JsonNode>> field = bullet.fields();
+
+                             while (field.hasNext()) {
+                                 Map.Entry<String, JsonNode> message = field.next();
+                                 Iterator<Map.Entry<String, JsonNode>> messageField = message.getValue().fields();
+                                 while (messageField.hasNext()) {
+                                     Map.Entry<String, JsonNode> messageInfo = messageField.next();
+
+                                     // 时间戳求余放大
+                                    long times = (Long.parseLong(messageInfo.getKey()) / (5 * 60)) * (5 * 60 * 1000);
+                                    String text = messageInfo.getValue().toString();
+
+                                     // 特殊弹幕过滤
+                                    if (text.charAt(1) == '[' && text.charAt(text.length() - 2) == ']') {
+                                        continue;
+                                    }
+                                     // 过滤特殊字符
+                                     Result parse = NlpAnalysis.parse(messageInfo.getValue().toString().replaceAll("[\\pP\\pS\\pZ]", ""));
+                                     for (Term words : parse) {
+                                         String word = words.toString().split("/")[0];
+                                         if (word.length() <= 1) {
+                                             continue;
+                                         }
+                                         WordCountModel model = new WordCountModel();
+                                         model.setWord(word);
+                                         model.setTimestamp(times);
+                                         model.setCount(1);
+                                         model.setAv(av);
+                                         collector.collect(model);
+                                     }
+                                 }
+                             }
+                         }
+                         // 评论区
+                         JsonNode replies = value.get("replies");
+                         for (JsonNode repliesInfo : replies) {
+                             JsonNode repliesMessage = repliesInfo.get("message");
+                             long times = (Long.parseLong(repliesInfo.get("time").toString()) / (5 * 60)) * (5 * 60 * 1000);
+                             Result parse = NlpAnalysis.parse(repliesMessage.toString().replaceAll("[\\pP\\pS\\pZ]", ""));
+
+                             for (Term words : parse) {
+                                 String word = words.toString().split("/")[0];
+                                 if (word.length() <= 1 || blackListWord.contains(word)) {
+                                     continue;
+                                 }
+                                 WordCountModel model = new WordCountModel();
+                                 model.setWord(word);
+                                 model.setTimestamp(times);
+                                 model.setCount(1);
+                                 model.setAv(av);
+                                 collector.collect(model);
+                             }
+                         }
+                     }
+                });
 
         cleanData
-                .keyBy("key")
+                .keyBy(new KeySelector<WordCountModel, Object>() {
+                    @Override
+                    public Object getKey(WordCountModel wordCountModel) {
+                        return wordCountModel.getKey();
+                    }
+                })
                 .timeWindow(Time.seconds(300))
                 .sum("count")
                 .countWindowAll(200)
                 .process(new ProcessAllWindowFunction<WordCountModel, ArrayList<WordCountModel>, GlobalWindow>() {
                     @Override
-                    public void process(Context context, Iterable<WordCountModel> elements, Collector<ArrayList<WordCountModel>> out) throws Exception {
+                    public void process(Context context, Iterable<WordCountModel> elements, Collector<ArrayList<WordCountModel>> out) {
 
                         ArrayList<WordCountModel> arrayList = new ArrayList<>();
 
@@ -280,7 +314,7 @@ public class WordCountStreaming {
             }
 
             @Override
-            public void flatMap(WordCountModel valueModel, Collector<EmotionalWordModel> collector) throws Exception {
+            public void flatMap(WordCountModel valueModel, Collector<EmotionalWordModel> collector) {
                 EmotionalWordModel emotionalWordModel = new EmotionalWordModel();
 
                 emotionalWordModel.setKey(valueModel.getKey());
@@ -291,13 +325,18 @@ public class WordCountStreaming {
                 collector.collect(emotionalWordModel);
             }
         })
-                .keyBy("key")
+                .keyBy(new KeySelector<EmotionalWordModel, Object>() {
+                    @Override
+                    public Object getKey(EmotionalWordModel emotionalWordModel) {
+                        return emotionalWordModel.getKey();
+                    }
+                })
                 .timeWindow(Time.seconds(300))
                 .sum("count")
                 .countWindowAll(200)
                 .process(new ProcessAllWindowFunction<EmotionalWordModel, ArrayList<EmotionalWordModel>, GlobalWindow>() {
                     @Override
-                    public void process(Context context, Iterable<EmotionalWordModel> iterable, Collector<ArrayList<EmotionalWordModel>> collector) throws Exception {
+                    public void process(Context context, Iterable<EmotionalWordModel> iterable, Collector<ArrayList<EmotionalWordModel>> collector) {
                         ArrayList<EmotionalWordModel> arrayList = new ArrayList<>();
                         for (EmotionalWordModel e : iterable) {
                             arrayList.add(e);
