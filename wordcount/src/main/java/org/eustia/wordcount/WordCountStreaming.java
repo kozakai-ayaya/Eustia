@@ -141,23 +141,23 @@ public class WordCountStreaming {
 
         DataStream<String> wordStream = streamExecutionEnvironment.addSource(kafkaConsumer);
 
-        wordStream.addSink(new ElasticsearchSink.Builder<>(
-                esHosts,
-                new ElasticsearchSinkFunction<String>() {
-                    @Override
-                    public void process(String s, RuntimeContext runtimeContext, RequestIndexer requestIndexer) {
-                        JSONObject objectNode = JSON.parseObject(s);
-                        HashMap<String, String> json = new HashMap<>(1);
-                        json.put("data", objectNode.toString());
-
-                        IndexRequest request = Requests.indexRequest()
-                                .index("word_count")
-                                .id(objectNode.get("av").toString())
-                                .source(json);
-                        requestIndexer.add(request);
-                    }
-                }).build()
-        );
+//        wordStream.addSink(new ElasticsearchSink.Builder<>(
+//                esHosts,
+//                new ElasticsearchSinkFunction<String>() {
+//                    @Override
+//                    public void process(String s, RuntimeContext runtimeContext, RequestIndexer requestIndexer) {
+//                        JSONObject objectNode = JSON.parseObject(s);
+//                        HashMap<String, String> json = new HashMap<>(1);
+//                        json.put("data", objectNode.toString());
+//
+//                        IndexRequest request = Requests.indexRequest()
+//                                .index("word_count")
+//                                .id(objectNode.get("av").toString())
+//                                .source(json);
+//                        requestIndexer.add(request);
+//                    }
+//                }).build()
+//        );
 
         DataStream<WordCountModel> cleanData = wordStream
                 .process(new ProcessFunction<String, JsonNode>() {
@@ -259,46 +259,47 @@ public class WordCountStreaming {
                         out.collect(arrayList);
                     }
                 })
-                .addSink(new RichSinkFunction<ArrayList<WordCountModel>>() {
-                    private TimeCheckpoint timeCheckpoint;
-                    private WordCountConnect wordCountConnect;
-                    private SqlInfo<WordCountInfo> sqlInfo;
-
-                    @Override
-                    public void open(Configuration parameters) throws Exception {
-                        this.timeCheckpoint = new TimeCheckpoint();
-                        this.wordCountConnect = new WordCountConnect();
-                        this.sqlInfo = new SqlInfo<>();
-                        super.open(parameters);
-                    }
-
-                    @Override
-                    public void invoke(ArrayList<WordCountModel> value, Context context) throws Exception {
-                        ArrayList<ArrayList<Object>> arrayLists = new ArrayList<>();
-
-                        for (WordCountModel wordCountModel : value) {
-                            ArrayList<Object> a = new ArrayList<>();
-                            a.add(wordCountModel.getTimestamp());
-                            a.add(wordCountModel.getWord());
-                            a.add(wordCountModel.getCount());
-                            arrayLists.add(a);
-                        }
-
-                        sqlInfo.setManyDataList(arrayLists);
-
-                        if (this.timeCheckpoint.isDay()) {
-                            sqlInfo.setTable(this.timeCheckpoint.getTimeFormat());
-                            try {
-                                this.wordCountConnect.createTable(sqlInfo);
-                            } catch (Exception e) {
-                                System.out.println(e);
-                            }
-                        }
-
-                        sqlInfo.setTable(this.timeCheckpoint.getTimeFormat());
-                        this.wordCountConnect.insertManyDuplicateUpdateData(sqlInfo);
-                    }
-                });
+                .print();
+//                .addSink(new RichSinkFunction<ArrayList<WordCountModel>>() {
+//                    private TimeCheckpoint timeCheckpoint;
+//                    private WordCountConnect wordCountConnect;
+//                    private SqlInfo<WordCountInfo> sqlInfo;
+//
+//                    @Override
+//                    public void open(Configuration parameters) throws Exception {
+//                        this.timeCheckpoint = new TimeCheckpoint();
+//                        this.wordCountConnect = new WordCountConnect();
+//                        this.sqlInfo = new SqlInfo<>();
+//                        super.open(parameters);
+//                    }
+//
+//                    @Override
+//                    public void invoke(ArrayList<WordCountModel> value, Context context) throws Exception {
+//                        ArrayList<ArrayList<Object>> arrayLists = new ArrayList<>();
+//
+//                        for (WordCountModel wordCountModel : value) {
+//                            ArrayList<Object> a = new ArrayList<>();
+//                            a.add(wordCountModel.getTimestamp());
+//                            a.add(wordCountModel.getWord());
+//                            a.add(wordCountModel.getCount());
+//                            arrayLists.add(a);
+//                        }
+//
+//                        sqlInfo.setManyDataList(arrayLists);
+//
+//                        if (this.timeCheckpoint.isDay()) {
+//                            sqlInfo.setTable(this.timeCheckpoint.getTimeFormat());
+//                            try {
+//                                this.wordCountConnect.createTable(sqlInfo);
+//                            } catch (Exception e) {
+//                                System.out.println(e);
+//                            }
+//                        }
+//
+//                        sqlInfo.setTable(this.timeCheckpoint.getTimeFormat());
+//                        this.wordCountConnect.insertManyDuplicateUpdateData(sqlInfo);
+//                    }
+//                });
 
         // 情绪统计
         cleanData.flatMap(new FlatMapFunction<WordCountModel, EmotionalWordModel>() {
@@ -343,48 +344,48 @@ public class WordCountStreaming {
                         }
                         collector.collect(arrayList);
                      }
-                })
-                .addSink(new RichSinkFunction<ArrayList<EmotionalWordModel>>() {
-                    private TimeCheckpoint timeCheckpoint;
-                    private EmotionalAnalysisConnect emotionalAnalysisConnect;
-                    private SqlInfo<EmotionalAnalysisInfo> sqlInfo;
-
-                    @Override
-                    public void open(Configuration parameters) throws Exception {
-                        this.timeCheckpoint = new TimeCheckpoint();
-                        this.emotionalAnalysisConnect = new EmotionalAnalysisConnect();
-                        this.sqlInfo = new SqlInfo<>();
-                        super.open(parameters);
-                    }
-
-                    @Override
-                    public void invoke(ArrayList<EmotionalWordModel> value, Context context) throws Exception {
-                        ArrayList<ArrayList<Object>> arrayLists = new ArrayList<>();
-
-                        for (EmotionalWordModel emotionalWordModel : value) {
-                            ArrayList<Object> a = new ArrayList<>();
-                            a.add(emotionalWordModel.getTimestamp());
-                            a.add(emotionalWordModel.getAv());
-                            a.add(emotionalWordModel.getEmotionalWord());
-                            a.add(emotionalWordModel.getCount());
-                            arrayLists.add(a);
-                        }
-
-                        sqlInfo.setManyDataList(arrayLists);
-
-                        if (this.timeCheckpoint.isDay()) {
-                            sqlInfo.setTable(this.timeCheckpoint.getTimeFormat());
-                            try {
-                                emotionalAnalysisConnect.createTable(this.sqlInfo);
-                            } catch (Exception e) {
-                                System.out.println(e);
-                            }
-                        }
-
-                        sqlInfo.setTable(this.timeCheckpoint.getTimeFormat());
-                        this.emotionalAnalysisConnect.insertManyDuplicateUpdateData(sqlInfo);
-                    }
-                });
+                }).print();
+//                .addSink(new RichSinkFunction<ArrayList<EmotionalWordModel>>() {
+//                    private TimeCheckpoint timeCheckpoint;
+//                    private EmotionalAnalysisConnect emotionalAnalysisConnect;
+//                    private SqlInfo<EmotionalAnalysisInfo> sqlInfo;
+//
+//                    @Override
+//                    public void open(Configuration parameters) throws Exception {
+//                        this.timeCheckpoint = new TimeCheckpoint();
+//                        this.emotionalAnalysisConnect = new EmotionalAnalysisConnect();
+//                        this.sqlInfo = new SqlInfo<>();
+//                        super.open(parameters);
+//                    }
+//
+//                    @Override
+//                    public void invoke(ArrayList<EmotionalWordModel> value, Context context) throws Exception {
+//                        ArrayList<ArrayList<Object>> arrayLists = new ArrayList<>();
+//
+//                        for (EmotionalWordModel emotionalWordModel : value) {
+//                            ArrayList<Object> a = new ArrayList<>();
+//                            a.add(emotionalWordModel.getTimestamp());
+//                            a.add(emotionalWordModel.getAv());
+//                            a.add(emotionalWordModel.getEmotionalWord());
+//                            a.add(emotionalWordModel.getCount());
+//                            arrayLists.add(a);
+//                        }
+//
+//                        sqlInfo.setManyDataList(arrayLists);
+//
+//                        if (this.timeCheckpoint.isDay()) {
+//                            sqlInfo.setTable(this.timeCheckpoint.getTimeFormat());
+//                            try {
+//                                emotionalAnalysisConnect.createTable(this.sqlInfo);
+//                            } catch (Exception e) {
+//                                System.out.println(e);
+//                            }
+//                        }
+//
+//                        sqlInfo.setTable(this.timeCheckpoint.getTimeFormat());
+//                        this.emotionalAnalysisConnect.insertManyDuplicateUpdateData(sqlInfo);
+//                    }
+//                });
 
         try {
             streamExecutionEnvironment.execute("WordCount");
