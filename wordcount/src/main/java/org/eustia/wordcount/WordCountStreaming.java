@@ -249,23 +249,39 @@ public class WordCountStreaming {
                 })
 //                .timeWindow(Time.seconds(300))
                 .sum("count")
-                .countWindowAll(200)
-                .process(new ProcessAllWindowFunction<WordCountModel, ArrayList<WordCountModel>, GlobalWindow>() {
+                .process(new ProcessFunction<WordCountModel, Object>() {
                     @Override
-                    public void process(Context context, Iterable<WordCountModel> elements, Collector<ArrayList<WordCountModel>> out) {
+                    public void processElement(WordCountModel wordCountModel, Context context, Collector<Object> collector) throws Exception {
+                        String s = "aaaaaaa";
+//                       ArrayList<WordCountModel> arrayList = new ArrayList<>();
 
-                        ArrayList<WordCountModel> arrayList = new ArrayList<>();
-
-                        for (WordCountModel x : elements) {
-                            int count  = x.getCount();
-
-                            if (count > needCount) {
-                                arrayList.add(x);
-                            }
-                        }
-                        out.collect(arrayList);
+//                        for (WordCountModel x : elements) {
+//                            int count  = x.getCount();
+//
+//                            if (count > needCount) {
+//                                arrayList.add(x);
+//                            }
+//                        }
+                        collector.collect(s);
                     }
                 });
+//                .countWindowAll(200)
+//                .process(new ProcessAllWindowFunction<WordCountModel, ArrayList<WordCountModel>, GlobalWindow>() {
+//                    @Override
+//                    public void process(Context context, Iterable<WordCountModel> elements, Collector<ArrayList<WordCountModel>> out) {
+//
+//                        ArrayList<WordCountModel> arrayList = new ArrayList<>();
+//
+//                        for (WordCountModel x : elements) {
+//                            int count  = x.getCount();
+//
+//                            if (count > needCount) {
+//                                arrayList.add(x);
+//                            }
+//                        }
+//                        out.collect(arrayList);
+//                    }
+//                });
 //                .addSink(new RichSinkFunction<ArrayList<WordCountModel>>() {
 //                    private TimeCheckpoint timeCheckpoint;
 //                    private WordCountConnect wordCountConnect;
@@ -340,17 +356,25 @@ public class WordCountStreaming {
                 })
 //                .timeWindow(Time.seconds(300))
                 .sum("count")
-                .countWindowAll(200)
-                .process(new ProcessAllWindowFunction<EmotionalWordModel, ArrayList<EmotionalWordModel>, GlobalWindow>() {
+                .process(new ProcessFunction<EmotionalWordModel, Object>() {
+
                     @Override
-                    public void process(Context context, Iterable<EmotionalWordModel> iterable, Collector<ArrayList<EmotionalWordModel>> collector) {
-                        ArrayList<EmotionalWordModel> arrayList = new ArrayList<>();
-                        for (EmotionalWordModel e : iterable) {
-                            arrayList.add(e);
-                        }
-                        collector.collect(arrayList);
-                     }
+                    public void processElement(EmotionalWordModel emotionalWordModel, Context context, Collector<Object> collector) throws Exception {
+                        String s = new String();
+                        collector.collect(s);
+                    }
                 });
+//                .countWindowAll(200)
+//                .process(new ProcessAllWindowFunction<EmotionalWordModel, ArrayList<EmotionalWordModel>, GlobalWindow>() {
+//                    @Override
+//                    public void process(Context context, Iterable<EmotionalWordModel> iterable, Collector<ArrayList<EmotionalWordModel>> collector) {
+//                        ArrayList<EmotionalWordModel> arrayList = new ArrayList<>();
+//                        for (EmotionalWordModel e : iterable) {
+//                            arrayList.add(e);
+//                        }
+//                        collector.collect(arrayList);
+//                     }
+//                });
 //                .addSink(new RichSinkFunction<ArrayList<EmotionalWordModel>>() {
 //                    private TimeCheckpoint timeCheckpoint;
 //                    private EmotionalAnalysisConnect emotionalAnalysisConnect;
