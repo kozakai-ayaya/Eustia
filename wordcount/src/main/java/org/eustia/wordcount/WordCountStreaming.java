@@ -141,6 +141,13 @@ public class WordCountStreaming {
 
         DataStream<String> wordStream = streamExecutionEnvironment.addSource(kafkaConsumer);
 
+        wordStream.process(new ProcessFunction<String, Object>() {
+            @Override
+            public void processElement(String s, Context context, Collector<Object> collector) throws Exception {
+
+            }
+        });
+
 //        wordStream.addSink(new ElasticsearchSink.Builder<>(
 //                esHosts,
 //                new ElasticsearchSinkFunction<String>() {
@@ -159,107 +166,106 @@ public class WordCountStreaming {
 //                }).build()
 //        );
 
-        DataStream<WordCountModel> cleanData = wordStream
-                .process(new ProcessFunction<String, JsonNode>() {
-                    @Override
-                    public void processElement(String s, Context context, Collector<JsonNode> collector) throws Exception {
-                        ObjectMapper objectMapper = new ObjectMapper();
-                        JsonNode jsonNode = objectMapper.readTree(s);
-                        collector.collect(jsonNode);
-                    }
-                })
-                .flatMap(new FlatMapFunction<JsonNode, WordCountModel>() {
-                     @Override
-                     public void flatMap(JsonNode value, Collector<WordCountModel> collector) {
-                         JsonNode bulletScreen = value.get("bullet_screen");
-                         String av = value.get("av").toString().replaceAll("\"", "");
+//        DataStream<WordCountModel> cleanData = wordStream
+//                .process(new ProcessFunction<String, JsonNode>() {
+//                    @Override
+//                    public void processElement(String s, Context context, Collector<JsonNode> collector) throws Exception {
+//                        ObjectMapper objectMapper = new ObjectMapper();
+//                        JsonNode jsonNode = objectMapper.readTree(s);
+//                        collector.collect(jsonNode);
+//                    }
+//                })
+//                .flatMap(new FlatMapFunction<JsonNode, WordCountModel>() {
+//                     @Override
+//                     public void flatMap(JsonNode value, Collector<WordCountModel> collector) {
+//                         JsonNode bulletScreen = value.get("bullet_screen");
+//                         String av = value.get("av").toString().replaceAll("\"", "");
+//
+//                         // 弹幕
+//                         for (JsonNode bulletInfo : bulletScreen) {
+//                             JsonNode bullet = bulletInfo.get("bullet");
+//                             Iterator<Map.Entry<String, JsonNode>> field = bullet.fields();
+//
+//                             while (field.hasNext()) {
+//                                 Map.Entry<String, JsonNode> message = field.next();
+//                                 Iterator<Map.Entry<String, JsonNode>> messageField = message.getValue().fields();
+//                                 while (messageField.hasNext()) {
+//                                     Map.Entry<String, JsonNode> messageInfo = messageField.next();
+//
+//                                     // 时间戳求余放大
+//                                    long times = (Long.parseLong(messageInfo.getKey()) / (5 * 60)) * (5 * 60 * 1000);
+//                                    String text = messageInfo.getValue().toString();
+//
+//                                     // 特殊弹幕过滤
+//                                    if (text.charAt(1) == '[' && text.charAt(text.length() - 2) == ']') {
+//                                        continue;
+//                                    }
+//                                     // 过滤特殊字符
+//                                     Result parse = NlpAnalysis.parse(messageInfo.getValue().toString().replaceAll("[\\pP\\pS\\pZ]", ""));
+//                                     for (Term words : parse) {
+//                                         String word = words.toString().split("/")[0];
+//                                         if (word.length() <= 1) {
+//                                             continue;
+//                                         }
+//                                         WordCountModel model = new WordCountModel();
+//                                         model.setWord(word);
+//                                         model.setTimestamp(times);
+//                                         model.setCount(1);
+//                                         model.setAv(av);
+//                                         collector.collect(model);
+//                                     }
+//                                 }
+//                             }
+//                         }
+//                         // 评论区
+//                         JsonNode replies = value.get("replies");
+//                         for (JsonNode repliesInfo : replies) {
+//                             JsonNode repliesMessage = repliesInfo.get("message");
+//                             long times = (Long.parseLong(repliesInfo.get("time").toString()) / (5 * 60)) * (5 * 60 * 1000);
+//                             Result parse = NlpAnalysis.parse(repliesMessage.toString().replaceAll("[\\pP\\pS\\pZ]", ""));
+//
+//                             for (Term words : parse) {
+//                                 String word = words.toString().split("/")[0];
+//                                 if (word.length() <= 1 || blackListWord.contains(word)) {
+//                                     continue;
+//                                 }
+//                                 WordCountModel model = new WordCountModel();
+//                                 model.setWord(word);
+//                                 model.setTimestamp(times);
+//                                 model.setCount(1);
+//                                 model.setAv(av);
+//                                 collector.collect(model);
+//                             }
+//                         }
+//                     }
+//                });
 
-                         // 弹幕
-                         for (JsonNode bulletInfo : bulletScreen) {
-                             JsonNode bullet = bulletInfo.get("bullet");
-                             Iterator<Map.Entry<String, JsonNode>> field = bullet.fields();
-
-                             while (field.hasNext()) {
-                                 Map.Entry<String, JsonNode> message = field.next();
-                                 Iterator<Map.Entry<String, JsonNode>> messageField = message.getValue().fields();
-                                 while (messageField.hasNext()) {
-                                     Map.Entry<String, JsonNode> messageInfo = messageField.next();
-
-                                     // 时间戳求余放大
-                                    long times = (Long.parseLong(messageInfo.getKey()) / (5 * 60)) * (5 * 60 * 1000);
-                                    String text = messageInfo.getValue().toString();
-
-                                     // 特殊弹幕过滤
-                                    if (text.charAt(1) == '[' && text.charAt(text.length() - 2) == ']') {
-                                        continue;
-                                    }
-                                     // 过滤特殊字符
-                                     Result parse = NlpAnalysis.parse(messageInfo.getValue().toString().replaceAll("[\\pP\\pS\\pZ]", ""));
-                                     for (Term words : parse) {
-                                         String word = words.toString().split("/")[0];
-                                         if (word.length() <= 1) {
-                                             continue;
-                                         }
-                                         WordCountModel model = new WordCountModel();
-                                         model.setWord(word);
-                                         model.setTimestamp(times);
-                                         model.setCount(1);
-                                         model.setAv(av);
-                                         collector.collect(model);
-                                     }
-                                 }
-                             }
-                         }
-                         // 评论区
-                         JsonNode replies = value.get("replies");
-                         for (JsonNode repliesInfo : replies) {
-                             JsonNode repliesMessage = repliesInfo.get("message");
-                             long times = (Long.parseLong(repliesInfo.get("time").toString()) / (5 * 60)) * (5 * 60 * 1000);
-                             Result parse = NlpAnalysis.parse(repliesMessage.toString().replaceAll("[\\pP\\pS\\pZ]", ""));
-
-                             for (Term words : parse) {
-                                 String word = words.toString().split("/")[0];
-                                 if (word.length() <= 1 || blackListWord.contains(word)) {
-                                     continue;
-                                 }
-                                 WordCountModel model = new WordCountModel();
-                                 model.setWord(word);
-                                 model.setTimestamp(times);
-                                 model.setCount(1);
-                                 model.setAv(av);
-                                 collector.collect(model);
-                             }
-                         }
-                     }
-                });
-
-        cleanData
-                .keyBy(new KeySelector<WordCountModel, Object>() {
-                    @Override
-                    public Object getKey(WordCountModel wordCountModel) {
-                        return wordCountModel.getKey();
-                    }
-                })
-                .timeWindow(Time.seconds(300))
-                .sum("count")
-                .countWindowAll(200)
-                .process(new ProcessAllWindowFunction<WordCountModel, ArrayList<WordCountModel>, GlobalWindow>() {
-                    @Override
-                    public void process(Context context, Iterable<WordCountModel> elements, Collector<ArrayList<WordCountModel>> out) {
-
-                        ArrayList<WordCountModel> arrayList = new ArrayList<>();
-
-                        for (WordCountModel x : elements) {
-                            int count  = x.getCount();
-
-                            if (count > needCount) {
-                                arrayList.add(x);
-                            }
-                        }
-                        out.collect(arrayList);
-                    }
-                })
-                .print();
+//        cleanData
+//                .keyBy(new KeySelector<WordCountModel, Object>() {
+//                    @Override
+//                    public Object getKey(WordCountModel wordCountModel) {
+//                        return wordCountModel.getKey();
+//                    }
+//                })
+//                .timeWindow(Time.seconds(300))
+//                .sum("count")
+//                .countWindowAll(200)
+//                .process(new ProcessAllWindowFunction<WordCountModel, ArrayList<WordCountModel>, GlobalWindow>() {
+//                    @Override
+//                    public void process(Context context, Iterable<WordCountModel> elements, Collector<ArrayList<WordCountModel>> out) {
+//
+//                        ArrayList<WordCountModel> arrayList = new ArrayList<>();
+//
+//                        for (WordCountModel x : elements) {
+//                            int count  = x.getCount();
+//
+//                            if (count > needCount) {
+//                                arrayList.add(x);
+//                            }
+//                        }
+//                        out.collect(arrayList);
+//                    }
+//                });
 //                .addSink(new RichSinkFunction<ArrayList<WordCountModel>>() {
 //                    private TimeCheckpoint timeCheckpoint;
 //                    private WordCountConnect wordCountConnect;
@@ -302,49 +308,49 @@ public class WordCountStreaming {
 //                });
 
         // 情绪统计
-        cleanData.flatMap(new FlatMapFunction<WordCountModel, EmotionalWordModel>() {
-
-            private String emotionalCheckpoint(String word) {
-                if (negativeWord.contains(word)) {
-                    return "negative";
-                } else if (positiveWord.contains(word)) {
-                    return "positive";
-                } else {
-                    return "unknown";
-                }
-            }
-
-            @Override
-            public void flatMap(WordCountModel valueModel, Collector<EmotionalWordModel> collector) {
-                EmotionalWordModel emotionalWordModel = new EmotionalWordModel();
-
-                emotionalWordModel.setKey(valueModel.getKey());
-                emotionalWordModel.setAv(valueModel.getAv());
-                emotionalWordModel.setEmotionalWord(this.emotionalCheckpoint(valueModel.getWord()));
-                emotionalWordModel.setTimestamp(valueModel.getTimestamp());
-                emotionalWordModel.setCount(valueModel.getCount());
-                collector.collect(emotionalWordModel);
-            }
-        })
-                .keyBy(new KeySelector<EmotionalWordModel, Object>() {
-                    @Override
-                    public Object getKey(EmotionalWordModel emotionalWordModel) {
-                        return emotionalWordModel.getKey();
-                    }
-                })
-                .timeWindow(Time.seconds(300))
-                .sum("count")
-                .countWindowAll(200)
-                .process(new ProcessAllWindowFunction<EmotionalWordModel, ArrayList<EmotionalWordModel>, GlobalWindow>() {
-                    @Override
-                    public void process(Context context, Iterable<EmotionalWordModel> iterable, Collector<ArrayList<EmotionalWordModel>> collector) {
-                        ArrayList<EmotionalWordModel> arrayList = new ArrayList<>();
-                        for (EmotionalWordModel e : iterable) {
-                            arrayList.add(e);
-                        }
-                        collector.collect(arrayList);
-                     }
-                }).print();
+//        cleanData.flatMap(new FlatMapFunction<WordCountModel, EmotionalWordModel>() {
+//
+//            private String emotionalCheckpoint(String word) {
+//                if (negativeWord.contains(word)) {
+//                    return "negative";
+//                } else if (positiveWord.contains(word)) {
+//                    return "positive";
+//                } else {
+//                    return "unknown";
+//                }
+//            }
+//
+//            @Override
+//            public void flatMap(WordCountModel valueModel, Collector<EmotionalWordModel> collector) {
+//                EmotionalWordModel emotionalWordModel = new EmotionalWordModel();
+//
+//                emotionalWordModel.setKey(valueModel.getKey());
+//                emotionalWordModel.setAv(valueModel.getAv());
+//                emotionalWordModel.setEmotionalWord(this.emotionalCheckpoint(valueModel.getWord()));
+//                emotionalWordModel.setTimestamp(valueModel.getTimestamp());
+//                emotionalWordModel.setCount(valueModel.getCount());
+//                collector.collect(emotionalWordModel);
+//            }
+//        })
+//                .keyBy(new KeySelector<EmotionalWordModel, Object>() {
+//                    @Override
+//                    public Object getKey(EmotionalWordModel emotionalWordModel) {
+//                        return emotionalWordModel.getKey();
+//                    }
+//                })
+//                .timeWindow(Time.seconds(300))
+//                .sum("count")
+//                .countWindowAll(200)
+//                .process(new ProcessAllWindowFunction<EmotionalWordModel, ArrayList<EmotionalWordModel>, GlobalWindow>() {
+//                    @Override
+//                    public void process(Context context, Iterable<EmotionalWordModel> iterable, Collector<ArrayList<EmotionalWordModel>> collector) {
+//                        ArrayList<EmotionalWordModel> arrayList = new ArrayList<>();
+//                        for (EmotionalWordModel e : iterable) {
+//                            arrayList.add(e);
+//                        }
+//                        collector.collect(arrayList);
+//                     }
+//                });
 //                .addSink(new RichSinkFunction<ArrayList<EmotionalWordModel>>() {
 //                    private TimeCheckpoint timeCheckpoint;
 //                    private EmotionalAnalysisConnect emotionalAnalysisConnect;
